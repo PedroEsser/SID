@@ -1,12 +1,6 @@
 package grupo11.projetosid;
 
-
-
-
 import com.mongodb.client.*;
-
-import filters.DateFilter;
-
 
 public class App {
 
@@ -19,7 +13,6 @@ public class App {
         final String ourURI = "mongodb://localhost:25017,localhost:24017,localhost:23017/?replicaSet=projetosid&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
         MongoClient ourMongoClient = MongoClients.create(ourURI);
         MongoDatabase ourMongoDB = ourMongoClient.getDatabase("sensors");
-        
         
         SensorDataWriter[] dataWriters = new SensorDataWriter[6];
         dataWriters[0] = new SensorDataWriter("h1", profMongoDB, ourMongoDB);

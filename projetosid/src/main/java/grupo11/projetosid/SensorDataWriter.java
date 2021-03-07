@@ -1,17 +1,10 @@
 package grupo11.projetosid;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
 
-import filters.DateFilter;
-import filters.DocumentFilter;
-import filters.SensorTypeFilter;
-
 import java.util.ArrayList;
-import java.util.List;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -30,9 +23,6 @@ public class SensorDataWriter extends Thread {
 		remoteCollection = remoteDB.getCollection("sensor" + sensor);
 		type = sensor.toUpperCase();
 		typeFilter = Filters.eq("Sensor", type);
-		//filters.add(new DateFilter(getLastDate()));
-		//System.out.println(getLastDate());
-		
 	}
 	
 	private Object getLastID() {
@@ -51,14 +41,6 @@ public class SensorDataWriter extends Thread {
 			sorted = sorted.filter(bsonFilter);
 		}
 		
-		//List<Bson> pipeline = singletonList(match(in("operationType", asList("insert", "delete"))));
-		//List<Bson> pipeline = new ArrayList<Bson>();
-		//pipeline.add(Filters.eq("operationType", "insert"));
-
-		/*cloudCollection.watch().forEach(e -> {
-			System.out.println(e);
-		});*/
-		
 		while(true) {
 			int count = 0;
 			ArrayList<Document> list = new ArrayList<Document>();
@@ -76,7 +58,6 @@ public class SensorDataWriter extends Thread {
 				remoteCollection.insertMany(list);
 				System.out.println(type + ", Count: " + count);
 			}
-			//System.out.println(remoteCollection.countDocuments());
 			Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID()), typeFilter);
 			sorted = sorted.filter(bsonFilter);
         }
