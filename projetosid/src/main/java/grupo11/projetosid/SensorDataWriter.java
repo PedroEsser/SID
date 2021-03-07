@@ -20,16 +20,16 @@ public class SensorDataWriter extends Thread {
 
 	private static final int BATCHSIZE = 20000;
 	
-	ArrayList<DocumentFilter> filters = new ArrayList<DocumentFilter>();
+	Bson typeFilter;
 	String type;
 	MongoCollection<Document> cloudCollection;
 	MongoCollection<Document> remoteCollection;
 	
 	public SensorDataWriter(String sensor, MongoDatabase cloudDB, MongoDatabase remoteDB) {
 		cloudCollection = cloudDB.getCollection("sensor" + sensor);
-		remoteCollection = remoteDB.getCollection("zone" + sensor.charAt(1));
+		remoteCollection = remoteDB.getCollection("sensor" + sensor);
 		type = sensor.toUpperCase();
-		filters.add(new SensorTypeFilter(type));
+		typeFilter = Filters.eq("Sensor", type);
 		//filters.add(new DateFilter(getLastDate()));
 		//System.out.println(getLastDate());
 		
@@ -38,13 +38,13 @@ public class SensorDataWriter extends Thread {
 	private Object getLastID() {
 		if(remoteCollection.countDocuments() == 0)
 			return null;
-		return remoteCollection.find().sort(Sorts.descending("_id")).first().get("_id");
+		return remoteCollection.find(typeFilter).sort(Sorts.descending("_id")).first().get("_id");
 	}
 	
 	public void run(){
 		Object lastID = getLastID();
 		System.out.println("Last ID of " + type + ": "  + lastID);
-		FindIterable<Document> sorted = cloudCollection.find().batchSize(BATCHSIZE);
+		FindIterable<Document> sorted = cloudCollection.find(typeFilter).batchSize(BATCHSIZE);
 		
 		if(lastID != null) {
 			Bson bsonFilter = Filters.gt("_id", lastID);
@@ -77,7 +77,7 @@ public class SensorDataWriter extends Thread {
 				System.out.println(type + ", Count: " + count);
 			}
 			//System.out.println(remoteCollection.countDocuments());
-			Bson bsonFilter = Filters.gt("_id", getLastID());
+			Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID()), typeFilter);
 			sorted = sorted.filter(bsonFilter);
         }
 		
