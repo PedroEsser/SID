@@ -16,11 +16,11 @@ import java.util.List;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-public class SensorDataWriter extends Thread{
+public class SensorDataWriter extends Thread {
 
 	private static final int BATCHSIZE = 20000;
 	
-	ArrayList<DocumentFilter> filters = new ArrayList();
+	ArrayList<DocumentFilter> filters = new ArrayList<DocumentFilter>();
 	String type;
 	MongoCollection<Document> cloudCollection;
 	MongoCollection<Document> remoteCollection;
@@ -72,7 +72,7 @@ public class SensorDataWriter extends Thread{
 			}
 			if(list.isEmpty()) {
 				System.out.println(type + " didn't insert anything");
-			}else {
+			} else {
 				remoteCollection.insertMany(list);
 				System.out.println(type + ", Count: " + count);
 			}

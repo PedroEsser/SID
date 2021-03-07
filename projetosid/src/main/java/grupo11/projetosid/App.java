@@ -32,6 +32,5 @@ public class App {
         for(SensorDataWriter writer : dataWriters)
         	writer.start();
 
-        
     }
 }
