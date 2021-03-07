@@ -22,25 +22,16 @@ public class App {
         
         
         SensorDataWriter[] dataWriters = new SensorDataWriter[6];
-        //dataWriters[0] = new SensorDataWriter("h1", profMongoDB, ourMongoDB);
+        dataWriters[0] = new SensorDataWriter("h1", profMongoDB, ourMongoDB);
         dataWriters[1] = new SensorDataWriter("t1", profMongoDB, ourMongoDB);
-        /*dataWriters[2] = new SensorDataWriter("l1", profMongoDB, ourMongoDB);
+        dataWriters[2] = new SensorDataWriter("l1", profMongoDB, ourMongoDB);
         dataWriters[3] = new SensorDataWriter("h2", profMongoDB, ourMongoDB);
         dataWriters[4] = new SensorDataWriter("t2", profMongoDB, ourMongoDB);
-        dataWriters[5] = new SensorDataWriter("l2", profMongoDB, ourMongoDB);*/
+        dataWriters[5] = new SensorDataWriter("l2", profMongoDB, ourMongoDB);
         
-        System.out.println();
+        for(SensorDataWriter writer : dataWriters)
+        	writer.start();
+
         
-        dataWriters[1].run();
-        
-        /*MongoCollection<Document> zone1 = ourMongoDB.getCollection("zone1");
-        
-        zone1.insertOne(Document.parse("{geh : 'angelo'}"));
-        System.out.println(zone1.countDocuments());*/
-        
-        
-        
-        
-        //mongoClient.close();
     }
 }

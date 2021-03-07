@@ -1,6 +1,9 @@
 package grupo11.projetosid;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import com.mongodb.client.*;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
 
 import filters.DateFilter;
@@ -8,45 +11,74 @@ import filters.DocumentFilter;
 import filters.SensorTypeFilter;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.bson.Document;
+import org.bson.conversions.Bson;
 
 public class SensorDataWriter extends Thread{
 
+	private static final int BATCHSIZE = 20000;
+	
 	ArrayList<DocumentFilter> filters = new ArrayList();
-	String lastDate;
+	String type;
 	MongoCollection<Document> cloudCollection;
 	MongoCollection<Document> remoteCollection;
 	
 	public SensorDataWriter(String sensor, MongoDatabase cloudDB, MongoDatabase remoteDB) {
 		cloudCollection = cloudDB.getCollection("sensor" + sensor);
 		remoteCollection = remoteDB.getCollection("zone" + sensor.charAt(1));
-		lastDate = getLastDate();
-		filters.add(new SensorTypeFilter(sensor.toUpperCase()));
+		type = sensor.toUpperCase();
+		filters.add(new SensorTypeFilter(type));
 		//filters.add(new DateFilter(getLastDate()));
 		//System.out.println(getLastDate());
 		
 	}
 	
-	private String getLastDate() {
-		return cloudCollection.find().sort(Sorts.descending("Data")).first().getString("Data");
+	private Object getLastID() {
+		if(remoteCollection.countDocuments() == 0)
+			return null;
+		return remoteCollection.find().sort(Sorts.descending("_id")).first().get("_id");
 	}
 	
 	public void run(){
-		FindIterable<Document> sorted = cloudCollection.find().sort(Sorts.descending("Data"));
+		Object lastID = getLastID();
+		System.out.println("Last ID of " + type + ": "  + lastID);
+		FindIterable<Document> sorted = cloudCollection.find().batchSize(BATCHSIZE);
 		
+		if(lastID != null) {
+			Bson bsonFilter = Filters.gt("_id", lastID);
+			sorted = sorted.filter(bsonFilter);
+		}
+		
+		//List<Bson> pipeline = singletonList(match(in("operationType", asList("insert", "delete"))));
+		//List<Bson> pipeline = new ArrayList<Bson>();
+		//pipeline.add(Filters.eq("operationType", "insert"));
+
+		/*cloudCollection.watch().forEach(e -> {
+			System.out.println(e);
+		});*/
 		
 		while(true) {
-			/*System.out.println(sorted.first().getString("Data"));
-			System.out.println("#########################");
-			//lastDate = sorted.first().getString("Data");
-			System.out.println(sorted.first().getString("Data"));*/
-			//System.out.println(sorted.get(0));
-        	try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			int count = 0;
+			ArrayList<Document> list = new ArrayList<Document>();
+			for(Document d : sorted) {
+				list.add(d);
+				if(count++ % BATCHSIZE == 0) {
+					System.out.println(count + "th Document from sensor " + d.getString("Sensor") + " inserted.");
+					remoteCollection.insertMany(list);
+					list.clear();
+				}
 			}
+			if(list.isEmpty()) {
+				System.out.println(type + " didn't insert anything");
+			}else {
+				remoteCollection.insertMany(list);
+				System.out.println(type + ", Count: " + count);
+			}
+			//System.out.println(remoteCollection.countDocuments());
+			Bson bsonFilter = Filters.gt("_id", getLastID());
+			sorted = sorted.filter(bsonFilter);
         }
 		
 	}
