@@ -22,7 +22,7 @@ public class Receiver {
 			subscriber.subscribe(Sender.TOPIC, (topic, msg) -> {
 			    byte[] payload = msg.getPayload();
 			    Document aux = SerializationUtils.deserialize(payload);
-			    System.out.println(aux);
+			    System.out.println("receiver:" + aux);
 			    receivedSignal.countDown();
 			});
 			receivedSignal.await(1, TimeUnit.MINUTES);

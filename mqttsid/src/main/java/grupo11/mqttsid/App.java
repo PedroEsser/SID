@@ -16,14 +16,11 @@ public class App {
 		final String ourURI = "mongodb://localhost:25017,localhost:24017,localhost:23017/?replicaSet=projetosid&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
         MongoClient ourMongoClient = MongoClients.create(ourURI);
         MongoDatabase ourMongoDB = ourMongoClient.getDatabase("sensors");
-        
-		String publisherId = "publisher_grupo11";
-		String subscriberId = "subscriber_grupo11";
 		
 		try {
 			
-			IMqttClient publisher = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", publisherId);
-			IMqttClient subscriber = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", subscriberId);
+			IMqttClient publisher = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "publisher_grupo11");
+			IMqttClient subscriber = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "subscriber_grupo11");
 			MqttConnectOptions options = new MqttConnectOptions();
 			options.setAutomaticReconnect(true);
 			options.setCleanSession(true);

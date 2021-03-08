@@ -1,10 +1,15 @@
 package grupo11.mqttsid;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.Scanner;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
@@ -12,12 +17,12 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Sorts;
 
 public class Sender extends Thread implements Callable<Void> {
 	
 	public static final String TOPIC = "sid_g11_xpexial";
-	Object lastID;
+	ObjectId lastID;
+	File auxID;
 	
 	Bson typeFilter;
 	String type;
@@ -31,38 +36,60 @@ public class Sender extends Thread implements Callable<Void> {
         this.localCollection = localDB.getCollection("sensor" + sensor);
         this.type = sensor.toUpperCase();
 		this.typeFilter = Filters.eq("Sensor", type);
+		new File(".\\lastIDs").mkdir();
+		this.auxID = new File(".\\lastIDs\\lastID_" + sensor + ".txt");
+		this.lastID = getLastID();
     }
 	
-	private Object getLastID() {
-		if(localCollection.countDocuments() == 0)
+	private void setLastID(Object lastID) {
+		try {
+			PrintWriter writer = new PrintWriter(auxID);
+			writer.print(lastID);
+			writer.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} 
+	}
+	
+	private ObjectId getLastID() {
+		try {
+			Scanner scanner = new Scanner(auxID);
+			if(scanner.hasNext()) {
+				ObjectId aux = new ObjectId(scanner.next());
+				scanner.close();
+				return aux;
+			} else {
+				scanner.close();
+				return null;
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 			return null;
-		return localCollection.find(typeFilter).sort(Sorts.descending("_id")).first().get("_id");
+		}
 	}
 	
 	public void run() {
 		
-		/*Object lastID = getLastID();
-		System.out.println("Last ID of " + type + ": "  + lastID);*/
 		FindIterable<Document> sorted = localCollection.find(typeFilter);
 		
-		/*if(lastID != null) {
+		if(lastID != null) {
 			Bson bsonFilter = Filters.gt("_id", lastID);
 			sorted = sorted.filter(bsonFilter);
-		}*/
+		}
 		
 		while(true) {
 			for(Document d : sorted) {
 				try {
+					System.out.println("sender:" + d);
 					payload = SerializationUtils.serialize(d);
 					call();
-					//
-					lastID = d.get("_id");
-					//
+					lastID = (ObjectId) d.get("_id");
+					setLastID(lastID);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
-			Bson bsonFilter = Filters.and(Filters.gt("_id", lastID /*getLastID()*/), typeFilter);
+			Bson bsonFilter = Filters.and(Filters.gt("_id", lastID), typeFilter);
 			sorted = sorted.filter(bsonFilter);
         }
 	}
