@@ -53,6 +53,9 @@ public class Sender extends Thread implements Callable<Void> {
 	
 	private ObjectId getLastID() {
 		try {
+			if(!auxID.exists()) {
+				this.auxID.createNewFile();
+			}
 			Scanner scanner = new Scanner(auxID);
 			if(scanner.hasNext()) {
 				ObjectId aux = new ObjectId(scanner.next());
@@ -62,7 +65,7 @@ public class Sender extends Thread implements Callable<Void> {
 				scanner.close();
 				return null;
 			}
-		} catch (FileNotFoundException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
