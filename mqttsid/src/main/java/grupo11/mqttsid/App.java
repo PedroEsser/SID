@@ -22,9 +22,11 @@ public class App {
 			IMqttClient publisher = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "publisher_grupo11");
 			IMqttClient subscriber = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "subscriber_grupo11");
 			MqttConnectOptions options = new MqttConnectOptions();
+			
 			options.setAutomaticReconnect(true);
 			options.setCleanSession(true);
 			options.setConnectionTimeout(10);
+			
 			publisher.connect(options);
 			subscriber.connect(options);
 
@@ -36,9 +38,9 @@ public class App {
 			senders[4] = new Sender(publisher, "t2", ourMongoDB);
 			senders[5] = new Sender(publisher, "l2", ourMongoDB);
 	        
-	        for(Sender sender : senders)
+	        for(Sender sender : senders) {
 	        	sender.start();
-	        
+	        }
 	        Receiver receiver = new Receiver(subscriber);
 	        
 		} catch (MqttException e) {
