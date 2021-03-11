@@ -1,4 +1,4 @@
-package grupo11.mqttsid;
+package grupo11.projetosid;
 
 import java.sql.*;
 

@@ -31,9 +31,19 @@ public class SensorDataWriter extends Thread {
 		return localCollection.find(typeFilter).sort(Sorts.descending("_id")).first().get("_id");
 	}
 	
+	private boolean equals(Document d1, Document d2) {
+		return 	d1.get("Zona").equals(d2.get("Zona")) &&
+				d1.get("Sensor").equals(d2.get("Sensor")) &&
+				d1.get("Data").equals(d2.get("Data")) &&
+				d1.get("Medicao").equals(d2.get("Medicao"));
+	}
+	
 	public void run(){
 		Object lastID = getLastID();
 		System.out.println("Last ID of " + type + ": "  + lastID);
+		
+		Document lastDocument = null;
+		
 		FindIterable<Document> sorted = cloudCollection.find(typeFilter).batchSize(BATCHSIZE);
 		
 		if(lastID != null) {
@@ -41,15 +51,19 @@ public class SensorDataWriter extends Thread {
 			sorted = sorted.filter(bsonFilter);
 		}
 		
-		while(true) {
+		while(App.running) {
 			int count = 0;
 			ArrayList<Document> list = new ArrayList<Document>();
+			
 			for(Document d : sorted) {
-				list.add(d);
-				if(count++ % BATCHSIZE == 0) {
-					System.out.println(count + "th Document from sensor " + d.getString("Sensor") + " inserted.");
-					localCollection.insertMany(list);
-					list.clear();
+				if(lastDocument != null && !equals(d, lastDocument)) {
+					list.add(d);
+					if(count++ % BATCHSIZE == 0) {
+						System.out.println(count + "th Document from sensor " + d.getString("Sensor") + " inserted.");
+						localCollection.insertMany(list);
+						list.clear();
+					}
+					lastDocument = d;
 				}
 			}
 			if(list.isEmpty()) {

@@ -1,11 +1,17 @@
 package grupo11.projetosid;
 
+import java.util.Scanner;
+
 import com.mongodb.client.*;
 
 public class App {
 
+	public static boolean running = true;
+	
     public static void main( String[] args ){
     
+    	
+    	
     	final String profURI = "mongodb://aluno:aluno@194.210.86.10:27017/?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
         MongoClient profMongoClient = MongoClients.create(profURI);
         MongoDatabase profMongoDB = profMongoClient.getDatabase("sid2021");
@@ -24,6 +30,21 @@ public class App {
         
         for(SensorDataWriter writer : dataWriters)
         	writer.start();
+        
+        while(running) {
+        	Scanner scan = new Scanner(System.in);
+        	if(scan.next() == "exit")
+        		running = false;
+        }
+        
+        for(SensorDataWriter writer : dataWriters)
+			try {
+				writer.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+        
+        
 
     }
 }
