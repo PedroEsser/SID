@@ -3,24 +3,37 @@ package grupo11.mqttsid;
 import java.sql.*;
 
 public class JDBCManager {
+	
+	Connection connection;
+	Statement statement;
 
 	public JDBCManager() {
-		 try {
-			Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/projetosid", "root", "");
-			Statement stmt = conn.createStatement();
-			String strSelect = "select nome from utilizador";
-			ResultSet rset = stmt.executeQuery(strSelect);
-			System.out.println("The records selected are:");
-			int rowCount = 0;
-			while(rset.next()) {
-				System.out.println(rset.getString(1));
-				++rowCount;
-			}
-			System.out.println("Total number of records = " + rowCount);
+		try {
+			this.connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/projetosid", "root", "");
+			this.statement = connection.createStatement();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		 
+	}
+	
+	public void select(String strSelect) {
+		try {
+			ResultSet rset = statement.executeQuery(strSelect);
+			while(rset.next()) {
+				System.out.println(rset.getString("nome"));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void insert(String sqlInsert) {
+		try {
+	        statement.executeUpdate(sqlInsert);
+	        System.out.println("The SQL statement is: " + sqlInsert + "\n");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 	
 }
