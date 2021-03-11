@@ -16,21 +16,21 @@ public class JDBCManager {
 		}
 	}
 	
-	public void select(String strSelect) {
+	public void queryDB(String strSelect) {
 		try {
 			ResultSet rset = statement.executeQuery(strSelect);
 			while(rset.next()) {
-				System.out.println(rset.getString("nome"));
+				System.out.println("(Query) Statement: " + rset.getString("nome") + "\n");
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public void insert(String sqlInsert) {
+	public void updateDB(String strUpdate) {
 		try {
-	        statement.executeUpdate(sqlInsert);
-	        System.out.println("The SQL statement is: " + sqlInsert + "\n");
+	        statement.executeUpdate(strUpdate);
+	        System.out.println("(Insert) Statement: " + strUpdate + "\n");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
