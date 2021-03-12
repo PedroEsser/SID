@@ -7,7 +7,6 @@ public class JDBCManager {
 	private Connection connection;
 	private Statement statement;
 
-	// "jdbc:mysql://localhost:3306/projetosid", "root", ""
 	public JDBCManager(String... connectionInfo) {
 		try {
 			this.connection = DriverManager.getConnection(connectionInfo[0], connectionInfo[1], connectionInfo[2]);
@@ -35,11 +34,6 @@ public class JDBCManager {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-	}
-	
-	public static void main(String[] args) {
-		JDBCManager m = new JDBCManager();
-		m.queryDB("SELECT * FROM utilizador");
 	}
 	
 }
