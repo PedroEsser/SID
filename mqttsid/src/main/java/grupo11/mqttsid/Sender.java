@@ -21,15 +21,15 @@ import com.mongodb.client.model.Filters;
 public class Sender extends Thread implements Callable<Void> {
 	
 	public static final String TOPIC = "sid_g11_xpexial";
-	ObjectId lastID;
-	File auxID;
+	private ObjectId lastID;
+	private File auxID;
 	
-	Bson typeFilter;
-	String type;
-	MongoCollection<Document> localCollection;
+	private Bson typeFilter;
+	private String type;
+	private MongoCollection<Document> localCollection;
 	
-	IMqttClient publisher;
-	byte[] payload;
+	private IMqttClient publisher;
+	private byte[] payload;
 	
 	public Sender(IMqttClient publisher, String sensor, MongoDatabase localDB) {
         this.publisher = publisher;

@@ -4,8 +4,8 @@ import java.sql.*;
 
 public class JDBCManager {
 	
-	Connection connection;
-	Statement statement;
+	private Connection connection;
+	private Statement statement;
 
 	// "jdbc:mysql://localhost:3306/projetosid", "root", ""
 	public JDBCManager(String... connectionInfo) {
