@@ -13,15 +13,17 @@ public class SensorDataWriter extends Thread {
 
 	private static final int BATCHSIZE = 20000;
 	
-	Bson typeFilter;
-	String type;
-	MongoCollection<Document> cloudCollection;
-	MongoCollection<Document> localCollection;
+	private Bson typeFilter;
+	private Bson rangeFilter;
+	private String type;
+	private MongoCollection<Document> cloudCollection;
+	private MongoCollection<Document> localCollection;
 	
 	public SensorDataWriter(String sensor, MongoDatabase cloudDB, MongoDatabase localDB) {
 		cloudCollection = cloudDB.getCollection("sensor" + sensor);
 		localCollection = localDB.getCollection("sensor" + sensor);
 		type = sensor.toUpperCase();
+		rangeFilter = FilterUtils.getRangeFilter(type);
 		typeFilter = Filters.eq("Sensor", type);
 	}
 	
@@ -72,7 +74,7 @@ public class SensorDataWriter extends Thread {
 				localCollection.insertMany(list);
 				System.out.println(type + ", Count: " + count);
 			}
-			Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID()), typeFilter);
+			Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID()), typeFilter, rangeFilter);
 			sorted = sorted.filter(bsonFilter);
         }
 		
