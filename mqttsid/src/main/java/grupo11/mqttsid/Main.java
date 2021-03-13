@@ -9,7 +9,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 
-public class App {
+public class Main {
 
 	public static void main(String[] args) {
 		
@@ -28,13 +28,13 @@ public class App {
 			publisher.connect(options);
 			subscriber.connect(options);
 
-			Sender[] senders = new Sender[6];
-			senders[0] = new Sender(publisher, "h1", ourMongoDB);
-			senders[1] = new Sender(publisher, "t1", ourMongoDB);
-			senders[2] = new Sender(publisher, "l1", ourMongoDB);
-			senders[3] = new Sender(publisher, "h2", ourMongoDB);
-			senders[4] = new Sender(publisher, "t2", ourMongoDB);
-			senders[5] = new Sender(publisher, "l2", ourMongoDB);
+			Sender[] senders = new Sender[1];
+			senders[0] = new Sender(publisher, "t1", ourMongoDB);
+//			senders[1] = new Sender(publisher, "h1", ourMongoDB);
+//			senders[2] = new Sender(publisher, "l1", ourMongoDB);
+//			senders[3] = new Sender(publisher, "h2", ourMongoDB);
+//			senders[4] = new Sender(publisher, "t2", ourMongoDB);
+//			senders[5] = new Sender(publisher, "l2", ourMongoDB);
 	        
 	        for(Sender sender : senders)
 	        	sender.start();

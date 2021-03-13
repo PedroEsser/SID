@@ -2,12 +2,12 @@ package grupo11.mqttsid;
 
 import java.sql.*;
 
-public class JDBCManager {
+public class SQLHandler {
 	
 	private Connection connection;
 	private Statement statement;
 
-	public JDBCManager(String... connectionInfo) {
+	public SQLHandler(String... connectionInfo) {
 		try {
 			this.connection = DriverManager.getConnection(connectionInfo[0], connectionInfo[1], connectionInfo[2]);
 			this.statement = connection.createStatement();
@@ -16,14 +16,12 @@ public class JDBCManager {
 		}
 	}
 	
-	public void queryDB(String strSelect) {
+	public ResultSet queryDB(String strQuery) {
 		try {
-			ResultSet rset = statement.executeQuery(strSelect);
-			while(rset.next()) {
-				System.out.println("(Query) Statement: " + rset.getString("nome") + "\n");
-			}
+			return statement.executeQuery(strQuery);
 		} catch (SQLException e) {
 			e.printStackTrace();
+			return null;
 		}
 	}
 	

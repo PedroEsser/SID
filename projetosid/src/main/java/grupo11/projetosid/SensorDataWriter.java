@@ -14,7 +14,7 @@ public class SensorDataWriter extends Thread {
 	private static final int BATCHSIZE = 20000;
 	
 	private Bson typeFilter;
-	private Bson rangeFilter;
+//	private Bson rangeFilter;
 	private String type;
 	private MongoCollection<Document> cloudCollection;
 	private MongoCollection<Document> localCollection;
@@ -23,7 +23,7 @@ public class SensorDataWriter extends Thread {
 		cloudCollection = cloudDB.getCollection("sensor" + sensor);
 		localCollection = localDB.getCollection("sensor" + sensor);
 		type = sensor.toUpperCase();
-		rangeFilter = FilterUtils.getRangeFilter(type);
+		//rangeFilter = FilterUtils.getRangeFilter(type);
 		typeFilter = Filters.eq("Sensor", type);
 	}
 	
@@ -34,7 +34,10 @@ public class SensorDataWriter extends Thread {
 	}
 	
 	private boolean equals(Document d1, Document d2) {
-		return 	d1.get("Zona").equals(d2.get("Zona")) &&
+		if(d1==null || d2==null) {
+			return false;
+		}
+		return  d1.get("Zona").equals(d2.get("Zona")) &&
 				d1.get("Sensor").equals(d2.get("Sensor")) &&
 				d1.get("Data").equals(d2.get("Data")) &&
 				d1.get("Medicao").equals(d2.get("Medicao"));
@@ -53,20 +56,21 @@ public class SensorDataWriter extends Thread {
 			sorted = sorted.filter(bsonFilter);
 		}
 		
-		while(App.running) {
+		while(Main.running) {
 			int count = 0;
 			ArrayList<Document> list = new ArrayList<Document>();
 			
 			for(Document d : sorted) {
-				if(lastDocument != null && !equals(d, lastDocument)) {
+				d.replace("Data", DateUtils.parse(d.getString("Data")));
+				if(!equals(d, lastDocument)) {
 					list.add(d);
-					if(count++ % BATCHSIZE == 0) {
+					if(++count % BATCHSIZE == 0) {
 						System.out.println(count + "th Document from sensor " + d.getString("Sensor") + " inserted.");
 						localCollection.insertMany(list);
 						list.clear();
 					}
-					lastDocument = d;
 				}
+				lastDocument = d;
 			}
 			if(list.isEmpty()) {
 				System.out.println(type + " didn't insert anything");
@@ -74,8 +78,15 @@ public class SensorDataWriter extends Thread {
 				localCollection.insertMany(list);
 				System.out.println(type + ", Count: " + count);
 			}
-			Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID()), typeFilter, rangeFilter);
+			Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID()), typeFilter/*, rangeFilter*/);
 			sorted = sorted.filter(bsonFilter);
+			
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			
         }
 		
 	}

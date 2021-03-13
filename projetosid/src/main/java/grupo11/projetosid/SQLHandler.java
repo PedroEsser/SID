@@ -4,8 +4,8 @@ import java.sql.*;
 
 public class SQLHandler {
 	
-	Connection connection;
-	Statement statement;
+	private Connection connection;
+	private Statement statement;
 
 	public SQLHandler(String... connectionInfo) {
 		try {
@@ -16,9 +16,9 @@ public class SQLHandler {
 		}
 	}
 	
-	public ResultSet queryDB(String query) {
+	public ResultSet queryDB(String strQuery) {
 		try {
-			return statement.executeQuery(query);
+			return statement.executeQuery(strQuery);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return null;
