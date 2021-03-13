@@ -21,7 +21,7 @@ public class Receiver {
 	public void serve() {
 		CountDownLatch receivedSignal = new CountDownLatch(10);
 		try {
-			subscriber.subscribe(Sender.TOPIC, (topic, msg) -> {
+			subscriber.subscribe(Sender.TOPIC, 2, (topic, msg) -> {
 			    byte[] payload = msg.getPayload();
 			    Document aux = SerializationUtils.deserialize(payload);
 			    System.out.println("receiver:" + aux);

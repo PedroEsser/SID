@@ -3,8 +3,6 @@ package grupo11.projetosid;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.bson.BsonDocument;
-import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import com.mongodb.client.model.Filters;
@@ -15,7 +13,7 @@ public class FilterUtils{
 		int idsensor = Integer.parseInt(sensorType.substring(1, 2));
 		String tipo = sensorType.substring(0, 1);
 		
-		SQLHandler handler = new SQLHandler("jdbc:mysql://localhost:3306/projetosid", "root", "");
+		SQLHandler handler = new SQLHandler("jdbc:mysql://localhost:3306/sid2021", "root", "");
     	ResultSet result = handler.queryDB(""
     			+ "SELECT * FROM sensor"
     			+ " WHERE idsensor=" + idsensor

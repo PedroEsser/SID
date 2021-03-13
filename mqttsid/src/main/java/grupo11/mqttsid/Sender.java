@@ -77,7 +77,6 @@ public class Sender extends Thread implements Callable<Void> {
         }
         MqttMessage msg = new MqttMessage(payload);
         msg.setQos(2);
-        msg.setRetained(false);
         publisher.publish(TOPIC,msg);        
         return null;
 	}

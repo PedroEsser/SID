@@ -24,7 +24,6 @@ public class Main {
 			MqttConnectOptions options = new MqttConnectOptions();
 			options.setAutomaticReconnect(true);
 			options.setCleanSession(true);
-			options.setConnectionTimeout(10);
 			publisher.connect(options);
 			subscriber.connect(options);
 
