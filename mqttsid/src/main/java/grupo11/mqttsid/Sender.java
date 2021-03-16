@@ -8,16 +8,16 @@ import org.apache.commons.lang3.SerializationUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.eclipse.paho.client.mqttv3.IMqttClient;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Sorts;
 
 public class Sender extends Thread implements Callable<Void> {
 	
-	public static final String TOPIC = "sid_g11_xpexial";
+	public static final String TOPIC = "sid_g11";
 	
 	private MongoCollection<Document> localCollection;
 	
@@ -48,7 +48,7 @@ public class Sender extends Thread implements Callable<Void> {
 	
 	public void run() {
 		
-		FindIterable<Document> sorted = localCollection.find();
+		FindIterable<Document> sorted = localCollection.find().sort(Sorts.ascending("Data"));
 		
 		if(lastDate != null) {
 			Bson bsonFilter = Filters.gt("Data", lastDate);
@@ -56,6 +56,11 @@ public class Sender extends Thread implements Callable<Void> {
 		}
 		
 		while(true) {
+			try {
+				sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			for(Document d : sorted) {
 				try {
 					System.out.println("sender:" + d);
@@ -75,9 +80,7 @@ public class Sender extends Thread implements Callable<Void> {
 		if (!publisher.isConnected()) {
             return null;
         }
-        MqttMessage msg = new MqttMessage(payload);
-        msg.setQos(2);
-        publisher.publish(TOPIC,msg);        
+        publisher.publish(TOPIC, payload, 2, false);
         return null;
 	}
 

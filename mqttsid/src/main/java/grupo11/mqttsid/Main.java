@@ -4,6 +4,7 @@ import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -19,11 +20,12 @@ public class Main {
 		
 		try {
 			
-			IMqttClient publisher = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "publisher_grupo11");
-			IMqttClient subscriber = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "subscriber_grupo11");
+			IMqttClient publisher = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "publisher_grupo11"/*, new MemoryPersistence()*/);
+			IMqttClient subscriber = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "subscriber_grupo11"/*, new MemoryPersistence()*/);
 			MqttConnectOptions options = new MqttConnectOptions();
 			options.setAutomaticReconnect(true);
 			options.setCleanSession(true);
+//			options.setCleanSession(false);
 			publisher.connect(options);
 			subscriber.connect(options);
 
