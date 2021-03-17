@@ -16,7 +16,9 @@ public class DateUtils {
                 	Date date = sdf.parse(d);
                     sdf.applyPattern("yyyy-MM-dd HH:mm:ss");
                     return sdf.format(date).toString();
-                } catch (ParseException e) {}
+                } catch (ParseException e) {
+                	e.printStackTrace();
+                }
             }
         }
 		return null;

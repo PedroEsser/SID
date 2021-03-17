@@ -43,11 +43,9 @@ public class SensorDataWriter extends Thread {
 	
 	public void run(){
 		Object lastID = getLastID();
-		
 		Document lastDocument = null;
 		
 		FindIterable<Document> sorted = cloudCollection.find(typeFilter).batchSize(BATCHSIZE);
-		
 		if(lastID != null) {
 			Bson bsonFilter = Filters.gt("_id", lastID);
 			sorted = sorted.filter(bsonFilter);
@@ -76,7 +74,7 @@ public class SensorDataWriter extends Thread {
 				sorted = sorted.filter(bsonFilter);
 				
 				sleep(1000);
-			} catch (Exception e) {
+			} catch (InterruptedException e) {
 				interrupt();
 			}
 			
