@@ -12,13 +12,13 @@ import javax.swing.text.BadLocationException;
 
 public class GUI {
 	
-	private SensorDataWriter[] dataWriters;
+	private Runnable r;
 	private JTextArea console;
 	private JScrollPane scroll;
 	private int count = 0;
 
-	public GUI(SensorDataWriter[] dataWriters) {
-		this.dataWriters = dataWriters;
+	public GUI(Runnable r) {
+		this.r = r;
 		create();
 	}
 	
@@ -33,11 +33,12 @@ public class GUI {
         panel.add(BorderLayout.SOUTH, start);
         start.addActionListener(e-> {
         	if(start.getText().equals("Start")) {
-        		for(SensorDataWriter writer : this.dataWriters)
-                	writer.start();
+        		r.run();
         		start.setText("Stop");
         	} else {
-        		Main.running = false;
+        		for(SensorDataWriter dw: Main.dataWriters) {
+        			dw.interrupt();
+        		}
         		start.setText("Start");
         	}
         });
@@ -48,7 +49,7 @@ public class GUI {
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 	
-	public void addData(String data) {
+	public synchronized void addData(String data) {
 		console.append(data);
 		JScrollBar vertical = scroll.getVerticalScrollBar();
 		vertical.setValue(vertical.getMaximum());

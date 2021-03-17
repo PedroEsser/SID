@@ -53,32 +53,31 @@ public class SensorDataWriter extends Thread {
 			sorted = sorted.filter(bsonFilter);
 		}
 		
-		while(Main.running) {
-			int count = 0;
-			ArrayList<Document> list = new ArrayList<Document>();
-			
-			for(Document d : sorted) {
-				d.replace("Data", DateUtils.parse(d.getString("Data")));
-				if(!equals(d, lastDocument)) {
-					list.add(d);
-					Main.gui.addData(d+"\n");
-					if(++count % BATCHSIZE == 0) {
-						localCollection.insertMany(list);
-						list.clear();
-					}
-				}
-				lastDocument = d;
-			}
-			if(!list.isEmpty()) {
-				localCollection.insertMany(list);
-			}
-			Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID()), typeFilter);
-			sorted = sorted.filter(bsonFilter);
-			
+		while(!interrupted()) {
 			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+				sleep(1000);
+				
+				int count = 0;
+				ArrayList<Document> list = new ArrayList<Document>();
+				for(Document d : sorted) {
+					d.replace("Data", DateUtils.parse(d.getString("Data")));
+					if(!equals(d, lastDocument)) {
+						list.add(d);
+						Main.gui.addData(d+"\n");
+						if(++count % BATCHSIZE == 0) {
+							localCollection.insertMany(list);
+							list.clear();
+						}
+					}
+					lastDocument = d;
+				}
+				if(!list.isEmpty()) {
+					localCollection.insertMany(list);
+				}
+				Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID()), typeFilter);
+				sorted = sorted.filter(bsonFilter);
+			} catch (Exception e) {
+				interrupt();
 			}
 			
         }

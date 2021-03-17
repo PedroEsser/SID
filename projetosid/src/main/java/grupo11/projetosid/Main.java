@@ -4,8 +4,8 @@ import com.mongodb.client.*;
 
 public class Main {
 
-	public static boolean running = true;
 	public static GUI gui;
+	public static SensorDataWriter[] dataWriters;
 	
     public static void main( String[] args ){
     
@@ -17,15 +17,20 @@ public class Main {
         MongoClient ourMongoClient = MongoClients.create(ourURI);
         MongoDatabase ourMongoDB = ourMongoClient.getDatabase("sensors");
         
-        SensorDataWriter[] dataWriters = new SensorDataWriter[1];
-        dataWriters[0] = new SensorDataWriter("t1", profMongoDB, ourMongoDB);
-//      dataWriters[1] = new SensorDataWriter("t1", profMongoDB, ourMongoDB);
-//      dataWriters[2] = new SensorDataWriter("l1", profMongoDB, ourMongoDB);
-//      dataWriters[3] = new SensorDataWriter("h2", profMongoDB, ourMongoDB);
-//      dataWriters[4] = new SensorDataWriter("t2", profMongoDB, ourMongoDB);
-//      dataWriters[5] = new SensorDataWriter("l2", profMongoDB, ourMongoDB);
-        
-        gui = new GUI(dataWriters);
+        Runnable r = () -> {
+        	dataWriters = new SensorDataWriter[1];
+            dataWriters[0] = new SensorDataWriter("t1", profMongoDB, ourMongoDB);
+//          dataWriters[1] = new SensorDataWriter("t1", profMongoDB, ourMongoDB);
+//          dataWriters[2] = new SensorDataWriter("l1", profMongoDB, ourMongoDB);
+//          dataWriters[3] = new SensorDataWriter("h2", profMongoDB, ourMongoDB);
+//          dataWriters[4] = new SensorDataWriter("t2", profMongoDB, ourMongoDB);
+//          dataWriters[5] = new SensorDataWriter("l2", profMongoDB, ourMongoDB);
+            
+        	for(SensorDataWriter writer : dataWriters)
+            	writer.start();
+		};
+		
+        gui = new GUI(r);
 
     }
 }
