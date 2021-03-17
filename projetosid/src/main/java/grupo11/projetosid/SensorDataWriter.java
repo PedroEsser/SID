@@ -54,9 +54,7 @@ public class SensorDataWriter extends Thread {
 		}
 		
 		while(!interrupted()) {
-			try {
-				sleep(1000);
-				
+			try {			
 				int count = 0;
 				ArrayList<Document> list = new ArrayList<Document>();
 				for(Document d : sorted) {
@@ -76,6 +74,8 @@ public class SensorDataWriter extends Thread {
 				}
 				Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID()), typeFilter);
 				sorted = sorted.filter(bsonFilter);
+				
+				sleep(1000);
 			} catch (Exception e) {
 				interrupt();
 			}
