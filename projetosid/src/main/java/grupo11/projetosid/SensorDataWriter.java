@@ -74,7 +74,7 @@ public class SensorDataWriter extends Thread {
 				sorted = sorted.filter(bsonFilter);
 				
 				sleep(1000);
-			} catch (InterruptedException e) {
+			} catch (Exception | Error e) {
 				interrupt();
 			}
 			

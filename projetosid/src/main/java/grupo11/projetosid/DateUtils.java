@@ -6,7 +6,7 @@ import java.util.Date;
 
 public class DateUtils {
 
-	private static final String[] formats = { "yyyy-MM-dd'T'HH:mm:ss'Z'",   "yyyy-MM-dd' at 'HH:mm:ss' GMT'" };
+	private static final String[] formats = { "yyyy-MM-dd'T'HH:mm:ss'Z'",   "yyyy-MM-dd 'at' HH:mm:ss z" };
 	
 	public static String parse(String d) {
         if (d != null) {
@@ -16,9 +16,7 @@ public class DateUtils {
                 	Date date = sdf.parse(d);
                     sdf.applyPattern("yyyy-MM-dd HH:mm:ss");
                     return sdf.format(date).toString();
-                } catch (ParseException e) {
-                	e.printStackTrace();
-                }
+                } catch (ParseException e) {}
             }
         }
 		return null;
