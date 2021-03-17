@@ -43,7 +43,6 @@ public class SensorDataWriter extends Thread {
 	
 	public void run(){
 		Object lastID = getLastID();
-		System.out.println("Last ID of " + type + ": "  + lastID);
 		
 		Document lastDocument = null;
 		
@@ -62,19 +61,16 @@ public class SensorDataWriter extends Thread {
 				d.replace("Data", DateUtils.parse(d.getString("Data")));
 				if(!equals(d, lastDocument)) {
 					list.add(d);
+					Main.gui.addData(d+"\n");
 					if(++count % BATCHSIZE == 0) {
-						System.out.println(count + "th Document from sensor " + d.getString("Sensor") + " inserted.");
 						localCollection.insertMany(list);
 						list.clear();
 					}
 				}
 				lastDocument = d;
 			}
-			if(list.isEmpty()) {
-				System.out.println(type + " didn't insert anything");
-			} else {
+			if(!list.isEmpty()) {
 				localCollection.insertMany(list);
-				System.out.println(type + ", Count: " + count);
 			}
 			Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID()), typeFilter);
 			sorted = sorted.filter(bsonFilter);
