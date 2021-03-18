@@ -22,23 +22,24 @@ public class Receiver {
 	}
 	
 	public void serve() {
-//		CountDownLatch receivedSignal = new CountDownLatch(10);
 		try {
 			subscriber.subscribe(Sender.TOPIC, 2, (topic, msg) -> {
 			    byte[] payload = msg.getPayload();
 			    Document aux = SerializationUtils.deserialize(payload);
-			    if(sensorsRange.get(aux.getString("sensor")).isOutOfBounds(aux.getDouble("leitura"))) {
+			    if(sensorsRange.get(aux.getString("Sensor")).isOutOfBounds(Double.parseDouble(aux.getString("Medicao")))) {
 //			    	inserir alerta respetivo
-			    	sqlmanager.updateDB("");
+//			    	sqlmanager.updateDB("");
 			    }
-			    System.out.println("receiver:" + aux);
+			    Main.gui.addData("receiver:" + aux + "\n");
 			    sqlmanager.updateDB("insert into medicao(zona, sensor, hora, leitura) values ('" + aux.get("Zona") + "','" + aux.get("Sensor") + "','" + aux.get("Data") + "','" + aux.get("Medicao") + "')");
-//			    receivedSignal.countDown();
 			});
-//			receivedSignal.await(1, TimeUnit.MINUTES);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public IMqttClient getSubscriber() {
+		return subscriber;
 	}
 	
 }

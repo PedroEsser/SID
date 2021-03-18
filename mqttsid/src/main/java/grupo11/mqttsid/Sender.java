@@ -8,7 +8,9 @@ import org.apache.commons.lang3.SerializationUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.eclipse.paho.client.mqttv3.IMqttClient;
+import org.eclipse.paho.client.mqttv3.MqttException;
 
+import com.mongodb.MongoInterruptedException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -55,28 +57,30 @@ public class Sender extends Thread implements Callable<Void> {
 			sorted = sorted.filter(bsonFilter);
 		}
 		
-		while(true) {
-			try {
-				sleep(2000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			for(Document d : sorted) {
-				try {
-					System.out.println("sender:" + d);
+		while(!interrupted()) {
+			try {				
+				for(Document d : sorted) {
+					Main.gui.addData("sender:" + d + "\n");
 					payload = SerializationUtils.serialize(d);
 					call();
 					lastDate = d.getString("Data");
-				} catch (Exception e) {
-					e.printStackTrace();
 				}
+				sleep(2000);
+				sorted = sorted.filter(Filters.gt("Date", lastDate));
+			} catch (InterruptedException | MongoInterruptedException | Error e) {
+				interrupt();
+			} catch (MqttException e) {
+				e.printStackTrace();
 			}
-			sorted = sorted.filter(Filters.gt("Date", lastDate));
         }
 	}
 	
+	public IMqttClient getPublisher() {
+		return publisher;
+	}
+
 	@Override
-	public Void call() throws Exception {
+	public Void call() throws MqttException {
 		if (!publisher.isConnected()) {
             return null;
         }

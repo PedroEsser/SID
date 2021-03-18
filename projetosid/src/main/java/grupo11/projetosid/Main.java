@@ -18,13 +18,13 @@ public class Main {
         MongoDatabase ourMongoDB = ourMongoClient.getDatabase("sensors");
         
         Runnable r = () -> {
-        	dataWriters = new SensorDataWriter[6];
+        	dataWriters = new SensorDataWriter[1];
             dataWriters[0] = new SensorDataWriter("t1", profMongoDB, ourMongoDB);
-            dataWriters[1] = new SensorDataWriter("h1", profMongoDB, ourMongoDB);
-            dataWriters[2] = new SensorDataWriter("l1", profMongoDB, ourMongoDB);
-            dataWriters[3] = new SensorDataWriter("t2", profMongoDB, ourMongoDB);
-            dataWriters[4] = new SensorDataWriter("h2", profMongoDB, ourMongoDB);
-            dataWriters[5] = new SensorDataWriter("l2", profMongoDB, ourMongoDB);
+//            dataWriters[1] = new SensorDataWriter("h1", profMongoDB, ourMongoDB);
+//            dataWriters[2] = new SensorDataWriter("l1", profMongoDB, ourMongoDB);
+//            dataWriters[3] = new SensorDataWriter("t2", profMongoDB, ourMongoDB);
+//            dataWriters[4] = new SensorDataWriter("h2", profMongoDB, ourMongoDB);
+//            dataWriters[5] = new SensorDataWriter("l2", profMongoDB, ourMongoDB);
             
         	for(SensorDataWriter writer : dataWriters)
             	writer.start();
