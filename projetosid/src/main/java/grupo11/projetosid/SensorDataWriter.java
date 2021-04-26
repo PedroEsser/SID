@@ -25,7 +25,7 @@ public class SensorDataWriter extends Thread {
 		cloudCollection = cloudDB.getCollection("sensor" + sensor);
 		localCollection = localDB.getCollection("sensor" + sensor);
 		type = sensor.toUpperCase();
-		typeFilter = Filters.eq("Sensor", type);
+		typeFilter = Filters.and(Filters.eq("Sensor", type), Filters.eq("Zona", type.replaceFirst("^.", "Z")));
 	}
 	
 	private Object getLastID() {
@@ -34,18 +34,8 @@ public class SensorDataWriter extends Thread {
 		return localCollection.find(typeFilter).sort(Sorts.descending("_id")).first().get("_id");
 	}
 	
-	private boolean equals(Document d1, Document d2) {
-		if(d1==null || d2==null) {
-			return false;
-		}
-		return  d1.get("Zona").equals(d2.get("Zona")) &&
-				d1.get("Sensor").equals(d2.get("Sensor")) &&
-				d1.get("Data").equals(d2.get("Data")) &&
-				d1.get("Medicao").equals(d2.get("Medicao"));
-	}
-	
 	public void run(){
-//		localCollection.deleteMany(new BasicDBObject());
+		localCollection.deleteMany(new BasicDBObject());
 		
 		FindIterable<Document> sorted = cloudCollection.find(typeFilter).batchSize(BATCHSIZE);		
 		Object lastID = getLastID();
@@ -62,21 +52,24 @@ public class SensorDataWriter extends Thread {
 				int count = 0;
 				ArrayList<Document> list = new ArrayList<Document>();
 				for(Document d : sorted) {
-					d.replace("Data", DateUtils.parse(d.getString("Data")));
-					if(!equals(d, lastDocument)) {
+					d.replace("Data", Utils.parseDate(d.getString("Data")));
+					if(!Utils.equals(d, lastDocument) && Utils.isValid(d)) {
 						list.add(d);
 						Main.gui.addData(d+"\n");
 						if(++count % BATCHSIZE == 0) {
 							localCollection.insertMany(list);
 							list.clear();
 						}
+					}else {
+						if(!Utils.isValid(d))
+							System.out.println("GEH: " + d);
 					}
 					lastDocument = d;
 				}
 				if(!list.isEmpty()) {
 					localCollection.insertMany(list);
 				}
-				Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID()), Filters.gt("Data", DateUtils.getCurrentDateMinus(30)), typeFilter);
+				Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID())/*, Filters.gt("Data", Utils.getCurrentDateMinus(30))*/, typeFilter);
 				sorted = sorted.filter(bsonFilter);
 			} catch (Exception | Error e) {
 				interrupt();

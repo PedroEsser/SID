@@ -2,10 +2,14 @@ package grupo11.mqttsid;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FilterUtils {
+public class Utils {
+	
+	public static final DateTimeFormatter STANDARD_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 	
 	public static Map<String,Range> getRangeFilter() {
 		
@@ -25,6 +29,11 @@ public class FilterUtils {
 			e.printStackTrace();
 			return null;
 		}
+	
+	}
+	
+	public static String standardFormat(LocalDateTime date) {
+		return STANDARD_DATE_FORMAT.format(date);
 	}
 	
 }

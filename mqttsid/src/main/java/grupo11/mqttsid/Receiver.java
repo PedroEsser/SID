@@ -18,7 +18,7 @@ public class Receiver {
 		this.subscriber = subscriber;
 		this.sqlmanager = new SQLHandler("jdbc:mysql://localhost:3306/projetosid", "root", "");
 		this.sqlmanager.updateDB("delete from medicao");
-		this.sensorsRange = FilterUtils.getRangeFilter();
+		this.sensorsRange = Utils.getRangeFilter();
 		serve();
 	}
 	

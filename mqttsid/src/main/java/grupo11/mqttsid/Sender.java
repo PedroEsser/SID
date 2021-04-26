@@ -2,6 +2,10 @@ package grupo11.mqttsid;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.lang3.SerializationUtils;
@@ -16,6 +20,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.Updates;
 
 public class Sender extends Thread implements Callable<Void> {
 	
@@ -26,53 +31,73 @@ public class Sender extends Thread implements Callable<Void> {
 	private IMqttClient publisher;
 	private byte[] payload;
 	
-	private String lastDate;
+	private LocalDateTime lastDate;
+	//private String lastDate;
 	private SQLHandler sqlmanager;
 	
 	public Sender(IMqttClient publisher, String sensor, MongoDatabase localDB) {
         this.publisher = publisher;
         this.localCollection = localDB.getCollection("sensor" + sensor);
 		this.sqlmanager = new SQLHandler("jdbc:mysql://localhost:3306/projetosid", "root", "");
-		setLastDate();
+		lastDate = LocalDateTime.now().minusMinutes(30);
     }
 	
-	private void setLastDate() {
-		ResultSet aux = sqlmanager.queryDB("select hora from medicao order by hora DESC limit 1");
-		try {
-			if(aux.next()) {
-				lastDate = aux.getString("hora");
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-			lastDate = null;
-		}
-	}
-	
 	public void run() {
-		
-		FindIterable<Document> sorted = localCollection.find().sort(Sorts.ascending("Data"));
-		
-		if(lastDate != null) {
-			Bson bsonFilter = Filters.gt("Data", lastDate);
-			sorted = sorted.filter(bsonFilter);
-		}
-		
 		while(!interrupted()) {
-			try {				
-				for(Document d : sorted) {
-					Main.gui.addData("sender:" + d + "\n");
-					payload = SerializationUtils.serialize(d);
-					call();
-					lastDate = d.getString("Data");
-				}
+			try {
+				
+				while(produceAndSendMedianOfNext(2));
+				
 				sleep(2000);
-				sorted = sorted.filter(Filters.gt("Date", lastDate));
 			} catch (InterruptedException | MongoInterruptedException | Error e) {
 				interrupt();
 			} catch (MqttException e) {
 				e.printStackTrace();
 			}
         }
+	}
+	
+	private Bson nextDateFilter(LocalDateTime nextDate) {
+		Bson gteFilter = Filters.gte("Data", Utils.standardFormat(lastDate));
+		Bson ltFilter = Filters.lt("Data", Utils.standardFormat(nextDate));
+		return Filters.and(gteFilter, ltFilter);
+	}
+	
+	private boolean produceAndSendMedianOfNext(int seconds) throws MqttException {
+		LocalDateTime nextDate = lastDate.plusSeconds(seconds);
+		
+		if(nextDate.isAfter(LocalDateTime.now()))
+			return false;
+		
+		Bson filter = nextDateFilter(nextDate);
+		lastDate = nextDate;
+		
+		FindIterable<Document> localDocuments = localCollection.find();
+		localDocuments.filter(filter).sort(Sorts.ascending("Data"));
+		List<Double> medicoes = new ArrayList<Double>();
+		Document lastDocument = null;
+		for(Document d : localDocuments){
+			medicoes.add(d.getDouble("Medicao"));
+			lastDocument = d;
+		}
+		if(lastDocument == null)
+			return true;
+		
+		double median = medianOf(medicoes);
+		lastDocument.replace("Medicao", median);
+		
+		Main.gui.addData("sender:" + lastDocument + "\n");
+		payload = SerializationUtils.serialize(lastDocument);
+		call();
+		
+		return true;
+	}
+	
+	private double medianOf(List<Double> vals) {
+		Collections.sort(vals);
+		if(vals.size() % 2 == 1)
+			return vals.get(vals.size() / 2);
+		return (vals.get(vals.size() / 2) + vals.get(vals.size() / 2 - 1)) / 2;
 	}
 	
 	public IMqttClient getPublisher() {
