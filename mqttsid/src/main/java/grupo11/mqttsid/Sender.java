@@ -21,6 +21,7 @@ import com.mongodb.client.model.Sorts;
 
 public class Sender extends Thread implements Callable<Void> {
 	
+	private static final int MARGIN = 5;
 	public static final String TOPIC = "sid_g11";
 	
 	private MongoCollection<Document> localCollection;
@@ -60,7 +61,7 @@ public class Sender extends Thread implements Callable<Void> {
 	private boolean produceAndSendMedianOfNext(int seconds) throws MqttException {
 		LocalDateTime nextDate = lastDate.plusSeconds(seconds);
 		
-		if(nextDate.isAfter(LocalDateTime.now()))
+		if(nextDate.isAfter(LocalDateTime.now().minusSeconds(MARGIN)))
 			return false;
 		
 		Bson filter = nextDateFilter(nextDate);
