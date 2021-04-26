@@ -35,12 +35,7 @@ public class SensorDataWriter extends Thread {
 	public void run(){
 		localCollection.deleteMany(new BasicDBObject());
 		
-		FindIterable<Document> sorted = cloudCollection.find(typeFilter).batchSize(BATCHSIZE);		
-		Object lastID = getLastID();
-		if(lastID != null) {
-			Bson bsonFilter = Filters.gt("_id", lastID);
-			sorted = sorted.filter(bsonFilter);
-		}
+		FindIterable<Document> sorted = cloudCollection.find(typeFilter).batchSize(BATCHSIZE);
 //		Bson dateFilter = Filters.gt("Data", DateUtils.getCurrentDateMinus(30));
 //		sorted = sorted.filter(dateFilter);
 		
@@ -58,9 +53,6 @@ public class SensorDataWriter extends Thread {
 							localCollection.insertMany(list);
 							list.clear();
 						}
-					}else {
-						if(!Utils.isValid(d))
-							System.out.println("GEH: " + d);
 					}
 					lastDocument = d;
 				}
