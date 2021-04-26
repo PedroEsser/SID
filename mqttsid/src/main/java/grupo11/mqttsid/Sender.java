@@ -1,7 +1,5 @@
 package grupo11.mqttsid;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,7 +18,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
-import com.mongodb.client.model.Updates;
 
 public class Sender extends Thread implements Callable<Void> {
 	
@@ -32,13 +29,10 @@ public class Sender extends Thread implements Callable<Void> {
 	private byte[] payload;
 	
 	private LocalDateTime lastDate;
-	//private String lastDate;
-	private SQLHandler sqlmanager;
 	
 	public Sender(IMqttClient publisher, String sensor, MongoDatabase localDB) {
         this.publisher = publisher;
         this.localCollection = localDB.getCollection("sensor" + sensor);
-		this.sqlmanager = new SQLHandler("jdbc:mysql://localhost:3306/projetosid", "root", "");
 		lastDate = LocalDateTime.now().minusMinutes(30);
     }
 	
@@ -77,7 +71,7 @@ public class Sender extends Thread implements Callable<Void> {
 		List<Double> medicoes = new ArrayList<Double>();
 		Document lastDocument = null;
 		for(Document d : localDocuments){
-			medicoes.add(d.getDouble("Medicao"));
+			medicoes.add(Double.parseDouble(d.getString("Medicao")));
 			lastDocument = d;
 		}
 		if(lastDocument == null)

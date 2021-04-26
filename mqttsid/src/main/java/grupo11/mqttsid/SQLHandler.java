@@ -28,7 +28,6 @@ public class SQLHandler {
 	public void updateDB(String strUpdate) {
 		try {
 	        statement.executeUpdate(strUpdate);
-	        System.out.println("(Insert) Statement: " + strUpdate + "\n");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

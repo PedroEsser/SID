@@ -1,8 +1,6 @@
 package grupo11.mqttsid;
 
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.bson.Document;
@@ -27,7 +25,7 @@ public class Receiver {
 			subscriber.subscribe(Sender.TOPIC, 2, (topic, msg) -> {
 			    byte[] payload = msg.getPayload();
 			    Document aux = SerializationUtils.deserialize(payload);
-			    if(sensorsRange.get(aux.getString("Sensor")).isOutOfBounds(Double.parseDouble(aux.getString("Medicao")))) {
+			    if(sensorsRange.get(aux.getString("Sensor")).isOutOfBounds(aux.getDouble("Medicao"))) {
 //			    	inserir alerta respetivo
 //			    	sqlmanager.updateDB("");
 			    }
