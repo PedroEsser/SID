@@ -36,6 +36,11 @@ public class SensorDataWriter extends Thread {
 		localCollection.deleteMany(new BasicDBObject());
 		
 		FindIterable<Document> sorted = cloudCollection.find(typeFilter).batchSize(BATCHSIZE);
+		Object lastID = getLastID();
+		if(lastID != null) {
+			Bson bsonFilter = Filters.gt("_id", lastID);
+			sorted = sorted.filter(bsonFilter);
+		}
 //		Bson dateFilter = Filters.gt("Data", DateUtils.getCurrentDateMinus(30));
 //		sorted = sorted.filter(dateFilter);
 		
