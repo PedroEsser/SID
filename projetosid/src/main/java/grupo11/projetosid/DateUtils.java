@@ -2,6 +2,8 @@ package grupo11.projetosid;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public class DateUtils {
@@ -21,5 +23,11 @@ public class DateUtils {
         }
 		return null;
     }
+	
+	public static String getCurrentDateMinus(int minutes) {
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern(formats[0]);  
+		LocalDateTime now = LocalDateTime.now().minusMinutes(minutes);  
+		return dtf.format(now);
+	}
 	
 }

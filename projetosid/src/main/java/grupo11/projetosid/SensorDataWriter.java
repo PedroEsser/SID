@@ -1,9 +1,12 @@
 package grupo11.projetosid;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 import org.bson.Document;
@@ -42,15 +45,18 @@ public class SensorDataWriter extends Thread {
 	}
 	
 	public void run(){
-		Object lastID = getLastID();
-		Document lastDocument = null;
+//		localCollection.deleteMany(new BasicDBObject());
 		
-		FindIterable<Document> sorted = cloudCollection.find(typeFilter).batchSize(BATCHSIZE);
+		FindIterable<Document> sorted = cloudCollection.find(typeFilter).batchSize(BATCHSIZE);		
+		Object lastID = getLastID();
 		if(lastID != null) {
 			Bson bsonFilter = Filters.gt("_id", lastID);
 			sorted = sorted.filter(bsonFilter);
 		}
+//		Bson dateFilter = Filters.gt("Data", DateUtils.getCurrentDateMinus(30));
+//		sorted = sorted.filter(dateFilter);
 		
+		Document lastDocument = null;
 		while(!interrupted()) {
 			try {			
 				int count = 0;
@@ -70,10 +76,8 @@ public class SensorDataWriter extends Thread {
 				if(!list.isEmpty()) {
 					localCollection.insertMany(list);
 				}
-				Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID()), typeFilter);
+				Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID()), Filters.gt("Data", DateUtils.getCurrentDateMinus(30)), typeFilter);
 				sorted = sorted.filter(bsonFilter);
-				
-				sleep(1000);
 			} catch (Exception | Error e) {
 				interrupt();
 			}

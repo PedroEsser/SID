@@ -9,7 +9,7 @@ public class FilterUtils {
 	
 	public static Map<String,Range> getRangeFilter() {
 		
-		SQLHandler handler = new SQLHandler("jdbc:mysql://194.210.86.10:3306/sid2021", "aluno", "aluno");
+		SQLHandler handler = new SQLHandler("jdbc:mysql://localhost:3306/projetosid", "root", "");
     	ResultSet result = handler.queryDB("SELECT * FROM sensor");
     	
     	Map<String,Range> aux = new HashMap<>();
