@@ -64,9 +64,7 @@ public class SensorDataWriter extends Thread {
 			} catch (Exception | Error e) {
 				interrupt();
 			}
-			
-        }
-		
+        }	
 	}
 	
 }
