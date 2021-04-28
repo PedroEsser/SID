@@ -21,7 +21,6 @@ import com.mongodb.client.model.Sorts;
 
 public class Sender extends Thread implements Callable<Void> {
 	
-	private static final int MARGIN = 5;
 	public static final String TOPIC = "sid_g11";
 	
 	private MongoCollection<Document> localCollection;
@@ -34,22 +33,66 @@ public class Sender extends Thread implements Callable<Void> {
 	public Sender(IMqttClient publisher, String sensor, MongoDatabase localDB) {
         this.publisher = publisher;
         this.localCollection = localDB.getCollection("sensor" + sensor);
-		lastDate = LocalDateTime.now().minusMinutes(30);
+		//lastDate = LocalDateTime.now().minusMinutes(30);
+        lastDate = LocalDateTime.now().minusDays(2).minusHours(11).minusMinutes(20);
     }
 	
 	public void run() {
-		while(!interrupted()) {
-			try {
-				
-				while(produceAndSendMedianOfNext(2));
-				
+		try {
+			upToDate(2);
+			while(true) {
+				try {
+					boolean success = produceAndSendMedianUntil(LocalDateTime.now());
+					if(success) 
+						lastDate = LocalDateTime.now();
+				} catch (MqttException e) {
+					e.printStackTrace();
+				}
 				sleep(2000);
-			} catch (InterruptedException | MongoInterruptedException | Error e) {
-				interrupt();
+			}
+			
+		} catch (InterruptedException | MongoInterruptedException | Error e) {
+		}
+	}
+	
+	private void upToDate(int timeStep) {
+		LocalDateTime nextDate = lastDate.plusSeconds(timeStep);
+		while(nextDate.isBefore(LocalDateTime.now())) {
+			try {
+				System.out.println(lastDate);
+				System.out.println(produceAndSendMedianUntil(nextDate));
 			} catch (MqttException e) {
 				e.printStackTrace();
 			}
-        }
+			lastDate = nextDate;
+			nextDate = lastDate.plusSeconds(timeStep);
+		};
+	}
+	
+	private boolean produceAndSendMedianUntil(LocalDateTime nextDate) throws MqttException {
+		List<Document> docs = getDocumentsUntil(nextDate);
+		if(!docs.isEmpty()) {
+			double median = Utils.medianOf(docs);
+			Document d = docs.get(0);
+			d.replace("Medicao", median);
+			d.replace("Data", Utils.standardFormat(nextDate));
+			sendDocument(d);
+			return true;
+		}
+		return false;
+	}
+	
+	private List<Document> getDocumentsUntil(LocalDateTime nextDate){
+		Bson filter = nextDateFilter(nextDate);
+		
+		FindIterable<Document> localDocuments = localCollection.find();
+		localDocuments.filter(filter);
+		List<Document> medicoes = new ArrayList<Document>();
+		
+		for(Document d : localDocuments)
+			medicoes.add(d);
+		
+		return medicoes;
 	}
 	
 	private Bson nextDateFilter(LocalDateTime nextDate) {
@@ -58,41 +101,10 @@ public class Sender extends Thread implements Callable<Void> {
 		return Filters.and(gteFilter, ltFilter);
 	}
 	
-	private boolean produceAndSendMedianOfNext(int seconds) throws MqttException {
-		LocalDateTime nextDate = lastDate.plusSeconds(seconds);
-		
-		if(nextDate.isAfter(LocalDateTime.now().minusSeconds(MARGIN)))
-			return false;
-		
-		Bson filter = nextDateFilter(nextDate);
-		lastDate = nextDate;
-		
-		FindIterable<Document> localDocuments = localCollection.find();
-		localDocuments.filter(filter).sort(Sorts.ascending("Data"));
-		List<Double> medicoes = new ArrayList<Double>();
-		Document lastDocument = null;
-		for(Document d : localDocuments){
-			medicoes.add(Double.parseDouble(d.getString("Medicao")));
-			lastDocument = d;
-		}
-		if(lastDocument == null)
-			return true;
-		
-		double median = medianOf(medicoes);
-		lastDocument.replace("Medicao", median);
-		
-		Main.gui.addData("sender:" + lastDocument + "\n");
-		payload = SerializationUtils.serialize(lastDocument);
+	private void sendDocument(Document d) throws MqttException {
+		Main.gui.addData("sender:" + d + "\n");
+		payload = SerializationUtils.serialize(d);
 		call();
-		
-		return true;
-	}
-	
-	private double medianOf(List<Double> vals) {
-		Collections.sort(vals);
-		if(vals.size() % 2 == 1)
-			return vals.get(vals.size() / 2);
-		return (vals.get(vals.size() / 2) + vals.get(vals.size() / 2 - 1)) / 2;
 	}
 	
 	public IMqttClient getPublisher() {
