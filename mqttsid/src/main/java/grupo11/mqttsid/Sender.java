@@ -2,7 +2,6 @@ package grupo11.mqttsid;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -17,7 +16,6 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Sorts;
 
 public class Sender extends Thread implements Callable<Void> {
 	
@@ -34,7 +32,7 @@ public class Sender extends Thread implements Callable<Void> {
         this.publisher = publisher;
         this.localCollection = localDB.getCollection("sensor" + sensor);
 		//lastDate = LocalDateTime.now().minusMinutes(30);
-        lastDate = LocalDateTime.now().minusDays(2).minusHours(11).minusMinutes(20);
+        lastDate = LocalDateTime.now().minusDays(3).minusHours(6).minusMinutes(5);
     }
 	
 	public void run() {

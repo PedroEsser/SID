@@ -4,7 +4,6 @@ import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -24,8 +23,8 @@ public class Main {
 	        
 		Runnable r = () -> {
 			try {
-				IMqttClient publisher = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "publisher_grupo11"/*, new MemoryPersistence()*/);
-				IMqttClient subscriber = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "subscriber_grupo11"/*, new MemoryPersistence()*/);
+				IMqttClient publisher = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "publisher_grupo11");
+				IMqttClient subscriber = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "subscriber_grupo11");
 				MqttConnectOptions options = new MqttConnectOptions();
 				options.setAutomaticReconnect(true);
 				options.setCleanSession(true);
@@ -43,6 +42,13 @@ public class Main {
 				
 				for(Sender sender : senders)
 		        	sender.start();
+				
+//				try {
+//					Thread.sleep(2000);
+//				} catch (InterruptedException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
 				
 				receiver = new Receiver(subscriber);
 			} catch (MqttException e) {
