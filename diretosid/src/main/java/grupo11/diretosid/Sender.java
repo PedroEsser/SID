@@ -29,20 +29,26 @@ public class Sender extends Thread {
 	private MongoCollection<Document> localCollection;
 	private MongoDatabase localDB;
 	private SQLHandler sqlmanager;
+
 	private File insertedDocs;
+
 	private LinkedList<String> lastMeasumentsTime;
 	private int measurementsPerSecond;
 	public final int DEFAULT_TIME = 1;
 
 	public Sender(MongoDatabase localDB, String sensor, SQLHandler sqlmanager) {
 		try {
-			this.measurementsPerSecond = DEFAULT_TIME;
 			this.localCollection = localDB.getCollection("sensor" + sensor);
-			this.lastMeasumentsTime = new LinkedList<>();
 			this.sqlmanager = sqlmanager;
 			this.localDB = localDB;
+
+
 			this.insertedDocs = new File("insertedDocs.csv");
 			this.insertedDocs.createNewFile();
+			
+			this.lastMeasumentsTime = new LinkedList<>();
+			this.measurementsPerSecond = DEFAULT_TIME;
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
