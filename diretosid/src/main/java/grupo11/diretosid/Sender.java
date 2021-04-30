@@ -30,28 +30,17 @@ public class Sender extends Thread {
 	private MongoDatabase localDB;
 	private SQLHandler sqlmanager;
 
-	private File insertedDocs;
-
 	private LinkedList<String> lastMeasumentsTime;
 	private int measurementsPerSecond;
 	public final int DEFAULT_TIME = 1;
 
 	public Sender(MongoDatabase localDB, String sensor, SQLHandler sqlmanager) {
-		try {
 			this.localCollection = localDB.getCollection("sensor" + sensor);
 			this.sqlmanager = sqlmanager;
 			this.localDB = localDB;
 
-
-			this.insertedDocs = new File("insertedDocs.csv");
-			this.insertedDocs.createNewFile();
-			
 			this.lastMeasumentsTime = new LinkedList<>();
 			this.measurementsPerSecond = DEFAULT_TIME;
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
 	public void run() {
@@ -59,23 +48,27 @@ public class Sender extends Thread {
 			try {
 				FindIterable<Document> localDocuments = localCollection.find();
 				localDocuments.sort(Sorts.descending("Data"));
+				if(localDocuments.first() == null) {
+					continue;
+				}
 				ArrayList<Document> docs = new ArrayList<>();
 				int aux = 0;
 				for (Document d : localDocuments) {
+					
 					if (aux++ >= 4)
 						break;
 					docs.add(d);
+					lastMeasumentsTime.add(d.get("Data").toString());
 				}
 				ArrayList<Document> res = checkDocuments(docs);
 				produceAndSendNext(res);
-				Main.gui.addData("Vou Dormir por " + measurementsPerSecond * 1000 * 3 + " segundos\n");
+				updateTime();
 				sleep(measurementsPerSecond * 1000 * 3);
 			} catch (InterruptedException | MongoInterruptedException | Error e) {
 				interrupt();
 			}
 		}
 	}
-//	MongoInterruptedException
 
 	private ArrayList<Document> checkDocuments(ArrayList<Document> dlist) {
 		ArrayList<Document> res = new ArrayList<Document>();
@@ -106,68 +99,36 @@ public class Sender extends Thread {
 	}
 
 	private synchronized void produceAndSendNext(ArrayList<Document> docs) {
-		ArrayList<String> content = getFromFile(insertedDocs);
-		for (Document d : docs) {
-			if (!containsInList(content, d.get("_id").toString())) {
-				writeToFile(d.get("_id").toString() + "\n", insertedDocs);
-				sqlmanager.updateDB("insert into medicao(zona, sensor, hora, leitura) " + "values ('" + d.get("Zona")
-						+ "','" + d.get("Sensor") + "','" + d.get("Data") + "','" + d.get("Medicao") + "')");
-				Main.gui.addData(d.toString() + "\n");
-				lastMeasumentsTime.add(d.get("Data").toString());
-			}
-		}
-	}
-
-	private void writeToFile(String data, File file) {
 		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(file, true));
-			writer.append(data);
-			writer.close();
-		} catch (IOException e) {
-			System.err.println("File not Found");
-		}
-	}
-
-	private ArrayList<String> getFromFile(File file) {
-		ArrayList<String> content = new ArrayList<>();
-		try {
-			Scanner scan = new Scanner(file);
-			while (scan.hasNext()) {
-				content.add(scan.nextLine().trim());
+			for (Document d : docs) {
+				Double res = Double.parseDouble(String.format("%.2f", Double.parseDouble(d.get("Medicao").toString())).replace(",", "."));
+				ResultSet cond = sqlmanager.queryDB("select count(idmedicao) from medicao where "
+						+ "zona = '" + d.get("Zona").toString() + "' and "
+						+ "sensor = '" + d.get("Sensor").toString() + "' and "
+						+ "hora = '" + d.get("Data").toString() + "' and "
+						+ "leitura = '" + res + "';");
+				if (cond.next() && cond.getInt(1)==0) {
+					Main.gui.addData("INSERTED: " + d.toString() + "\n");
+					sqlmanager.updateDB("insert into medicao(zona, sensor, hora, leitura) " +
+								"values ('" + d.get("Zona") + "','" + d.get("Sensor") + "','" + d.get("Data") + "','" + d.get("Medicao") + "')");
+				}else {
+					Main.gui.addData("DISCARDED: " + d.toString() + "\n");
+				}
 			}
-			scan.close();
-		} catch (FileNotFoundException e) {
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		return content;
-	}
-
-	private Boolean containsInList(ArrayList<String> content, String str) {
-		for (String c : content) {
-			if (c.equals(str)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private void updateTime() {
-		int numberOfMeasurements = 0;
+		int numberOfMeasurements = 1;
 		String firstMeasure = lastMeasumentsTime.pop();
 		for (int i = 0; i != lastMeasumentsTime.size(); i++) {
 			if (lastMeasumentsTime.get(i).equals(firstMeasure)) {
 				numberOfMeasurements++;
 			}
 		}
+		lastMeasumentsTime.clear();
 		this.measurementsPerSecond = numberOfMeasurements;
 	}
-
 }
-
-/*
- * 
- * Double d1 = Double.parseDouble(d.get("Medicao").toString()); String str =
- * String.format("%.2f", d1); Double d2 = Double.parseDouble("14.08");
- * 
- * 
- */
