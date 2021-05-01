@@ -31,8 +31,7 @@ public class Sender extends Thread implements Callable<Void> {
 	public Sender(IMqttClient publisher, String sensor, MongoDatabase localDB) {
         this.publisher = publisher;
         this.localCollection = localDB.getCollection("sensor" + sensor);
-		//lastDate = LocalDateTime.now().minusMinutes(30);
-        lastDate = LocalDateTime.now().minusDays(3).minusHours(6).minusMinutes(5);
+        lastDate = LocalDateTime.now().minusMinutes(5);
     }
 	
 	public void run() {
@@ -83,8 +82,7 @@ public class Sender extends Thread implements Callable<Void> {
 	private List<Document> getDocumentsUntil(LocalDateTime nextDate){
 		Bson filter = nextDateFilter(nextDate);
 		
-		FindIterable<Document> localDocuments = localCollection.find();
-		localDocuments.filter(filter);
+		FindIterable<Document> localDocuments = localCollection.find(filter);
 		List<Document> medicoes = new ArrayList<Document>();
 		
 		for(Document d : localDocuments)

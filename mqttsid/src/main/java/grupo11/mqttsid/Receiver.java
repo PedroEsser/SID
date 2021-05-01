@@ -69,7 +69,7 @@ public class Receiver {
 		ResultSet cultures = sqlmanager.queryDB("select * from parametrocultura where idzona = " + aux.getString("Zona").charAt(1));
 		try {
 			while(!cultures.isClosed() && cultures.next()) {
-				insertAlert(aux, cultures.getString(2), "1", "Sensor Estragado");
+				insertAlert(aux, cultures.getString(1), "1", "Sensor Estragado");
 			}
 		} catch(SQLException e) {
 			e.printStackTrace();
@@ -108,7 +108,7 @@ public class Receiver {
 	}
 	
 	private boolean hasBeenRecentlyAlerted(String culture, String type) throws SQLException {
-		ResultSet lastAlert = sqlmanager.queryDB("select hora from alerta where idcultura = " + culture + " and tipo = " + type + " order by idalerta desc limit 1");
+		ResultSet lastAlert = sqlmanager.queryDB("select horaescrita from alerta where idcultura = " + culture + " and tipo = " + type + " order by idalerta desc limit 1");
 		if(!lastAlert.next()) {
 			return false;
 		}
