@@ -18,8 +18,8 @@ import com.mongodb.client.MongoDatabase;
 public class GUI {
 	
 	public static GUI gui;
-	public static SensorDataWriter[] dataWriters;
-	public static boolean delete;
+	private static SensorDataWriter[] dataWriters;
+	private static boolean delete;
 	
 	private Runnable r;
 	private JTextArea console;
