@@ -56,8 +56,7 @@ public class Sender extends Thread implements Callable<Void> {
 		LocalDateTime nextDate = lastDate.plusSeconds(timeStep);
 		while(nextDate.isBefore(LocalDateTime.now())) {
 			try {
-				System.out.println(lastDate);
-				System.out.println(produceAndSendMedianUntil(nextDate));
+				produceAndSendMedianUntil(nextDate);
 			} catch (MqttException e) {
 				e.printStackTrace();
 			}
@@ -98,7 +97,7 @@ public class Sender extends Thread implements Callable<Void> {
 	}
 	
 	private void sendDocument(Document d) throws MqttException {
-		Main.gui.addData("sender:" + d + "\n");
+		SenderGUI.gui.addData("sender:" + d + "\n");
 		payload = SerializationUtils.serialize(d);
 		call();
 	}

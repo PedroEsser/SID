@@ -10,22 +10,28 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.text.BadLocationException;
 
+import org.eclipse.paho.client.mqttv3.IMqttClient;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
-public class GUI {
+public class ReceiverGUI {
+	
+	public static ReceiverGUI gui;
+	private static Receiver receiver;
 	
 	private Runnable r;
 	private JTextArea console;
 	private JScrollPane scroll;
 	private int count = 0;
 
-	public GUI(Runnable r) {
+	public ReceiverGUI(Runnable r) {
 		this.r = r;
 		create();
 	}
 	
 	private void create() {
-		JFrame window = new JFrame("Mongo To MySQL");
+		JFrame window = new JFrame("(Receiver) Mongo To MySQL");
 		JPanel panel = new JPanel(new BorderLayout()); 
 		console = new JTextArea();
 		console.setEditable(false);
@@ -39,11 +45,7 @@ public class GUI {
         		start.setText("Stop");
         	} else {
         		try {
-	        		for(Sender s: Main.senders) {
-						s.getPublisher().disconnect();
-	        			s.interrupt();
-	        		}
-					Main.receiver.getSubscriber().disconnect();
+					receiver.getSubscriber().disconnect();
 	        		start.setText("Start");
         		} catch (MqttException e1) {
 					e1.printStackTrace();
@@ -68,5 +70,25 @@ public class GUI {
 			} catch (BadLocationException e) {}
 		}
 	}
+	
+	public static void main(String[] args) {
+		        
+			Runnable r = () -> {
+				try {
+					IMqttClient subscriber = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "subscriber_grupo11");
+					MqttConnectOptions options = new MqttConnectOptions();
+					options.setAutomaticReconnect(true);
+					options.setCleanSession(true);
+//					options.setCleanSession(false);
+					subscriber.connect(options);
+					
+					receiver = new Receiver(subscriber);
+				} catch (MqttException e) {
+					e.printStackTrace();
+				}
+			};
+
+			gui = new ReceiverGUI(r);
+		}
 	
 }

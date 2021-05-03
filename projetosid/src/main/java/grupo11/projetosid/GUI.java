@@ -4,13 +4,22 @@ import java.awt.BorderLayout;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.text.BadLocationException;
 
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
+
 public class GUI {
+	
+	public static GUI gui;
+	public static SensorDataWriter[] dataWriters;
+	public static boolean delete;
 	
 	private Runnable r;
 	private JTextArea console;
@@ -33,10 +42,12 @@ public class GUI {
         panel.add(BorderLayout.SOUTH, start);
         start.addActionListener(e-> {
         	if(start.getText().equals("Start")) {
+        		int answer = JOptionPane.showConfirmDialog(null, "Do you want to clear the mongodb database?", "Database Clear", JOptionPane.YES_NO_OPTION);
+        		delete = answer == 0;
         		r.run();
         		start.setText("Stop");
         	} else {
-        		for(SensorDataWriter dw: Main.dataWriters) {
+        		for(SensorDataWriter dw: dataWriters) {
         			dw.interrupt();
         		}
         		start.setText("Start");
@@ -60,5 +71,32 @@ public class GUI {
 			} catch (BadLocationException e) {}
 		}
 	}
+	
+    public static void main(String[] args) {
+    
+    	final String profURI = "mongodb://aluno:aluno@194.210.86.10:27017/?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
+        MongoClient profMongoClient = MongoClients.create(profURI);
+        MongoDatabase profMongoDB = profMongoClient.getDatabase("sid2021");
+        
+        final String ourURI = "mongodb://localhost:25017,localhost:24017,localhost:23017/?replicaSet=projetosid&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
+        MongoClient ourMongoClient = MongoClients.create(ourURI);
+        MongoDatabase ourMongoDB = ourMongoClient.getDatabase("sensors");
+        
+        Runnable r = () -> {
+        	dataWriters = new SensorDataWriter[1];
+            dataWriters[0] = new SensorDataWriter("t1", profMongoDB, ourMongoDB, delete);
+//          dataWriters[1] = new SensorDataWriter("h1", profMongoDB, ourMongoDB, delete);
+//          dataWriters[2] = new SensorDataWriter("l1", profMongoDB, ourMongoDB, delete);
+//          dataWriters[3] = new SensorDataWriter("t2", profMongoDB, ourMongoDB, delete);
+//          dataWriters[4] = new SensorDataWriter("h2", profMongoDB, ourMongoDB, delete);
+//          dataWriters[5] = new SensorDataWriter("l2", profMongoDB, ourMongoDB, delete);
+            
+        	for(SensorDataWriter writer : dataWriters)
+            	writer.start();
+		};
+		
+        gui = new GUI(r);
+
+    }
 	
 }

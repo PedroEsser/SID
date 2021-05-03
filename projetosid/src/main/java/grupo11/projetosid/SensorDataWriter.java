@@ -18,12 +18,14 @@ public class SensorDataWriter extends Thread {
 	private String type;
 	private MongoCollection<Document> cloudCollection;
 	private MongoCollection<Document> localCollection;
+	private boolean delete;
 	
-	public SensorDataWriter(String sensor, MongoDatabase cloudDB, MongoDatabase localDB) {
+	public SensorDataWriter(String sensor, MongoDatabase cloudDB, MongoDatabase localDB, boolean delete) {
 		cloudCollection = cloudDB.getCollection("sensor" + sensor);
 		localCollection = localDB.getCollection("sensor" + sensor);
 		type = sensor.toUpperCase();
 		typeFilter = Filters.and(Filters.eq("Sensor", type), Filters.eq("Zona", type.replaceFirst("^.", "Z")));
+		this.delete = delete;
 	}
 	
 	private Object getLastID() {
@@ -33,7 +35,8 @@ public class SensorDataWriter extends Thread {
 	}
 	
 	public void run(){
-		localCollection.deleteMany(new BasicDBObject());
+		if(delete)
+			localCollection.deleteMany(new BasicDBObject());
 		
 		FindIterable<Document> sorted = cloudCollection.find(typeFilter).batchSize(BATCHSIZE);
 		Object lastID = getLastID();
@@ -53,7 +56,7 @@ public class SensorDataWriter extends Thread {
 					d.replace("Data", Utils.parseDate(d.getString("Data")));
 					if(!Utils.equals(d, lastDocument) && Utils.isValid(d)) {
 						list.add(d);
-						Main.gui.addData(d+"\n");
+						GUI.gui.addData(d+"\n");
 						if(++count % BATCHSIZE == 0) {
 							localCollection.insertMany(list);
 							list.clear();
