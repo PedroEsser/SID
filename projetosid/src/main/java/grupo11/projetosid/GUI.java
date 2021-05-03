@@ -42,7 +42,7 @@ public class GUI {
         panel.add(BorderLayout.SOUTH, start);
         start.addActionListener(e-> {
         	if(start.getText().equals("Start")) {
-        		int answer = JOptionPane.showConfirmDialog(null, "Do you want to clear the mongodb database?", "Database Clear", JOptionPane.YES_NO_OPTION);
+        		int answer = JOptionPane.showConfirmDialog(null, "Do you want to clear the local mongodb database?", "Database Clear", JOptionPane.YES_NO_OPTION);
         		delete = answer == 0;
         		r.run();
         		start.setText("Stop");
