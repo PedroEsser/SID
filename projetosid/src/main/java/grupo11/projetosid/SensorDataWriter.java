@@ -35,8 +35,10 @@ public class SensorDataWriter extends Thread {
 	}
 	
 	public void run(){
-		if(delete)
+		if(delete) {
+			GUI.gui.addData("Clearing the collection from the sensor " + type + "...\n");
 			localCollection.deleteMany(new BasicDBObject());
+		}
 		
 		FindIterable<Document> sorted = cloudCollection.find(typeFilter).batchSize(BATCHSIZE);
 		Object lastID = getLastID();
