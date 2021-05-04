@@ -33,6 +33,10 @@ public class Utils {
 		return dtf.format(now);
 	}
 	
+	public static LocalDateTime stringToDate(String date) {
+		return LocalDateTime.parse(date, STANDARD_DATE_FORMAT);
+	}
+	
 	public static boolean isValid(Document d) {
 		return d.get("Data") != null && isNumber(d.get("Medicao").toString());
 	}
@@ -54,10 +58,6 @@ public class Utils {
 		} catch(NumberFormatException e) {
 			return false;
 		}
-	}
-	
-	public static LocalDateTime stringToDate(String date) {
-		return LocalDateTime.parse(date, STANDARD_DATE_FORMAT);
 	}
 	
 }
