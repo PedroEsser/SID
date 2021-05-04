@@ -108,7 +108,7 @@ public class Receiver {
 		if(!lastAlert.next()) {
 			return false;
 		}
-		return LocalDateTime.parse(lastAlert.getString(1), Utils.STANDARD_DATE_FORMAT).isAfter(LocalDateTime.now().minusMinutes(5)); 
+		return Utils.stringToDate(lastAlert.getString(1)).isAfter(LocalDateTime.now().minusMinutes(5)); 
 	}
 
 	public IMqttClient getSubscriber() {

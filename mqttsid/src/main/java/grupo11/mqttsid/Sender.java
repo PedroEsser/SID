@@ -2,6 +2,7 @@ package grupo11.mqttsid;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -16,10 +17,13 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Sorts;
 
 public class Sender extends Thread implements Callable<Void> {
 	
 	public static final String TOPIC = "sid_g11";
+	public static final int MARGIN = 5;
+	public static final int TIME_STEP = 2;
 	
 	private MongoCollection<Document> localCollection;
 	
@@ -31,12 +35,12 @@ public class Sender extends Thread implements Callable<Void> {
 	public Sender(IMqttClient publisher, String sensor, MongoDatabase localDB) {
         this.publisher = publisher;
         this.localCollection = localDB.getCollection("sensor" + sensor);
-        lastDate = LocalDateTime.now().minusMinutes(5);
+        lastDate = LocalDateTime.now().minusMinutes(MARGIN);
     }
 	
 	public void run() {
 		try {
-			upToDate(2);
+			upToDate();
 			while(true) {
 				try {
 					boolean success = produceAndSendMedianUntil(LocalDateTime.now());
@@ -45,43 +49,66 @@ public class Sender extends Thread implements Callable<Void> {
 				} catch (MqttException e) {
 					e.printStackTrace();
 				}
-				sleep(2000);
+				sleep(TIME_STEP * 1000);
 			}
-			
 		} catch (InterruptedException | MongoInterruptedException | Error e) {
 		}
 	}
 	
-	private void upToDate(int timeStep) {
-		LocalDateTime nextDate = lastDate.plusSeconds(timeStep);
+	private void upToDate() {
+		LocalDateTime currentDate = LocalDateTime.now();
+		List<Document> allDocs = getDocumentsUntil(currentDate);
+		sendInIntervals(allDocs);
+		lastDate = currentDate;
+		
+		LocalDateTime nextDate = lastDate.plusSeconds(TIME_STEP);
 		while(nextDate.isBefore(LocalDateTime.now())) {
-			try {
-				produceAndSendMedianUntil(nextDate);
-			} catch (MqttException e) {
-				e.printStackTrace();
-			}
+			produceAndSendMedianUntil(nextDate);
 			lastDate = nextDate;
-			nextDate = lastDate.plusSeconds(timeStep);
+			nextDate = lastDate.plusSeconds(TIME_STEP);
 		};
 	}
 	
-	private boolean produceAndSendMedianUntil(LocalDateTime nextDate) throws MqttException {
-		List<Document> docs = getDocumentsUntil(nextDate);
+	private void sendInIntervals(List<Document> docs) {
+		LocalDateTime nextDate = lastDate.plusSeconds(TIME_STEP);
+		List<Document> aux = new LinkedList<Document>();
+		for(int i = 0 ; i < docs.size() ; i++) {
+			Document current = docs.get(i);
+			if(Utils.stringToDate(current.getString("Data")).isAfter(nextDate)) {
+				if(!aux.isEmpty()) {
+					makeMedianAndSend(aux, nextDate);
+				}
+				aux.clear();
+				nextDate = nextDate.plusSeconds(TIME_STEP);
+				i--;
+			} else {
+				aux.add(current);
+			}
+		}
+	}
+	
+	private boolean makeMedianAndSend(List<Document> docs, LocalDateTime nextDate) {
 		if(!docs.isEmpty()) {
 			double median = Utils.medianOf(docs);
 			Document d = docs.get(0);
 			d.replace("Medicao", median);
 			d.replace("Data", Utils.standardFormat(nextDate));
+			
 			sendDocument(d);
 			return true;
 		}
 		return false;
 	}
 	
+	private boolean produceAndSendMedianUntil(LocalDateTime nextDate) {
+		List<Document> docs = getDocumentsUntil(nextDate);
+		return makeMedianAndSend(docs, nextDate);
+	}
+	
 	private List<Document> getDocumentsUntil(LocalDateTime nextDate){
 		Bson filter = nextDateFilter(nextDate);
 		
-		FindIterable<Document> localDocuments = localCollection.find(filter);
+		FindIterable<Document> localDocuments = localCollection.find(filter).sort(Sorts.ascending("Data"));
 		List<Document> medicoes = new ArrayList<Document>();
 		
 		for(Document d : localDocuments)
@@ -96,10 +123,14 @@ public class Sender extends Thread implements Callable<Void> {
 		return Filters.and(gteFilter, ltFilter);
 	}
 	
-	private void sendDocument(Document d) throws MqttException {
-		SenderGUI.gui.addData("sender:" + d + "\n");
-		payload = SerializationUtils.serialize(d);
-		call();
+	private void sendDocument(Document d) {
+		try {
+			payload = SerializationUtils.serialize(d);
+			call();
+			SenderGUI.gui.addData("sender:" + d + "\n");
+		} catch (MqttException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public IMqttClient getPublisher() {
