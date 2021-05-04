@@ -10,6 +10,7 @@ import org.bson.Document;
 
 public class Utils {
 
+	public static final DateTimeFormatter STANDARD_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 	private static final String[] dateFormats = { "yyyy-MM-dd'T'HH:mm:ss'Z'",   "yyyy-MM-dd 'at' HH:mm:ss z" };
 	
 	public static String parseDate(String d) {
@@ -53,6 +54,10 @@ public class Utils {
 		} catch(NumberFormatException e) {
 			return false;
 		}
+	}
+	
+	public static LocalDateTime stringToDate(String date) {
+		return LocalDateTime.parse(date, STANDARD_DATE_FORMAT);
 	}
 	
 }

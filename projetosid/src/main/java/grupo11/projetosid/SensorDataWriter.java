@@ -5,6 +5,7 @@ import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import org.bson.Document;
@@ -13,6 +14,7 @@ import org.bson.conversions.Bson;
 public class SensorDataWriter extends Thread {
 
 	private static final int BATCHSIZE = 20000;
+	public static final int MARGIN = 5;
 	
 	private Bson typeFilter;
 	private String type;
@@ -46,17 +48,17 @@ public class SensorDataWriter extends Thread {
 			Bson bsonFilter = Filters.gt("_id", lastID);
 			sorted = sorted.filter(bsonFilter);
 		}
-//		Bson dateFilter = Filters.gt("Data", DateUtils.getCurrentDateMinus(30));
-//		sorted = sorted.filter(dateFilter);
 		
 		Document lastDocument = null;
 		while(!interrupted()) {
 			try {			
 				int count = 0;
 				ArrayList<Document> list = new ArrayList<Document>();
+				LocalDateTime lastDate = LocalDateTime.now().minusMinutes(MARGIN);
 				for(Document d : sorted) {
-					d.replace("Data", Utils.parseDate(d.getString("Data")));
-					if(!Utils.equals(d, lastDocument) && Utils.isValid(d)) {
+					String formattedDate = Utils.parseDate(d.getString("Data"));
+					d.replace("Data", formattedDate);
+					if(!Utils.equals(d, lastDocument) && Utils.isValid(d) && Utils.stringToDate(formattedDate).isAfter(lastDate)) {
 						list.add(d);
 						GUI.gui.addData(d+"\n");
 						if(++count % BATCHSIZE == 0) {
@@ -69,7 +71,7 @@ public class SensorDataWriter extends Thread {
 				if(!list.isEmpty()) {
 					localCollection.insertMany(list);
 				}
-				Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID())/*, Filters.gt("Data", Utils.getCurrentDateMinus(30))*/, typeFilter);
+				Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID()), typeFilter);
 				sorted = sorted.filter(bsonFilter);
 			} catch (Exception | Error e) {
 				interrupt();
