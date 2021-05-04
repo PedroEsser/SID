@@ -27,12 +27,6 @@ public class Utils {
 		return null;
     }
 	
-	public static String getCurrentDateMinus(int minutes) {
-		DateTimeFormatter dtf = DateTimeFormatter.ofPattern(dateFormats[0]);  
-		LocalDateTime now = LocalDateTime.now().minusMinutes(minutes);  
-		return dtf.format(now);
-	}
-	
 	public static LocalDateTime stringToDate(String date) {
 		return LocalDateTime.parse(date, STANDARD_DATE_FORMAT);
 	}

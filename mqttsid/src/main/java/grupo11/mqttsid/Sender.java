@@ -55,8 +55,8 @@ public class Sender extends Thread implements Callable<Void> {
 		LocalDateTime currentDate = LocalDateTime.now();
 		List<Document> allDocs = getDocumentsUntil(currentDate);
 		sendInIntervals(allDocs);
-		lastDate = currentDate;
 		
+		lastDate = currentDate;
 		LocalDateTime nextDate = lastDate.plusSeconds(TIME_STEP);
 		while(nextDate.isBefore(LocalDateTime.now())) {
 			produceAndSendMedianUntil(nextDate);

@@ -7,6 +7,8 @@ import com.mongodb.client.model.Sorts;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -33,7 +35,7 @@ public class SensorDataWriter extends Thread {
 	private Object getLastID() {
 		if(localCollection.countDocuments() == 0)
 			return null;
-		return localCollection.find(typeFilter).sort(Sorts.descending("_id")).first().get("_id");
+		return localCollection.find(typeFilter).sort(Sorts.descending("Data")).first().get("_id");
 	}
 	
 	public void run(){
@@ -42,16 +44,19 @@ public class SensorDataWriter extends Thread {
 			localCollection.deleteMany(new BasicDBObject());
 		}
 		
-		FindIterable<Document> sorted = cloudCollection.find(typeFilter).batchSize(BATCHSIZE);
+		FindIterable<Document> aux = cloudCollection.find(typeFilter).sort(Sorts.descending("_id")).limit(BATCHSIZE);
 		Object lastID = getLastID();
 		if(lastID != null) {
 			Bson bsonFilter = Filters.gt("_id", lastID);
-			sorted = sorted.filter(bsonFilter);
+			aux = aux.filter(bsonFilter);
 		}
+		List<Document> sorted = new LinkedList<>();
+		aux.forEach(d -> sorted.add(d));
+		sorted.sort((d1,d2) -> d1.getObjectId("_id").compareTo(d2.getObjectId("_id")));
 		
 		Document lastDocument = null;
 		while(!interrupted()) {
-			try {			
+			try {
 				int count = 0;
 				ArrayList<Document> list = new ArrayList<Document>();
 				LocalDateTime lastDate = LocalDateTime.now().minusMinutes(MARGIN);
@@ -72,7 +77,10 @@ public class SensorDataWriter extends Thread {
 					localCollection.insertMany(list);
 				}
 				Bson bsonFilter = Filters.and(Filters.gt("_id", getLastID()), typeFilter);
-				sorted = sorted.filter(bsonFilter);
+				sorted.clear();
+				aux = cloudCollection.find(bsonFilter);
+				aux.forEach(d -> sorted.add(d));
+				sleep(1000);
 			} catch (Exception | Error e) {
 				interrupt();
 			}
