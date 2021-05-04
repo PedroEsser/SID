@@ -42,13 +42,9 @@ public class Sender extends Thread implements Callable<Void> {
 		try {
 			upToDate();
 			while(true) {
-				try {
-					boolean success = produceAndSendMedianUntil(LocalDateTime.now());
-					if(success) 
-						lastDate = LocalDateTime.now();
-				} catch (MqttException e) {
-					e.printStackTrace();
-				}
+				boolean success = produceAndSendMedianUntil(LocalDateTime.now());
+				if(success) 
+					lastDate = LocalDateTime.now();
 				sleep(TIME_STEP * 1000);
 			}
 		} catch (InterruptedException | MongoInterruptedException | Error e) {
