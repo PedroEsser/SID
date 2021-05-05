@@ -14,4 +14,19 @@ public class Range {
 		return medicao > upperBound || medicao < lowerBound;
 	}
 	
+	public boolean isOutOfUpperBounds(double medicao) {
+		return medicao > upperBound;
+	}
+	
+	public boolean isOutOfLowerBounds(double medicao) {
+		return medicao < lowerBound;
+	}
+
+	public double getLowerBound() {
+		return lowerBound;
+	}
+
+	public double getUpperBound() {
+		return upperBound;
+	}
 }

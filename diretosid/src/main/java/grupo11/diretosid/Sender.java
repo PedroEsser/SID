@@ -107,6 +107,7 @@ public class Sender extends Thread {
 						+ "sensor = '" + d.get("Sensor").toString() + "' and "
 						+ "hora = '" + d.get("Data").toString() + "' and "
 						+ "leitura = '" + res + "';");
+				
 				if (cond.next() && cond.getInt(1)==0) {
 					Main.gui.addData("INSERTED: " + d.toString() + "\n");
 					sqlmanager.updateDB("insert into medicao(zona, sensor, hora, leitura) " +
