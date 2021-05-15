@@ -5,13 +5,18 @@ import java.util.HashMap;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Map.Entry;
+
 import java.util.LinkedList;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.LinkedHashMap;
 
 public class AlertManager extends Thread {
 
+	private int amountOfEmptySet;
+	public final int LIMIT = 5;
+	
 	private String zona;
 	private String sensor;
 	private String lastDate;
@@ -19,10 +24,11 @@ public class AlertManager extends Thread {
 	private ArrayList<Culture> cultures;
 	private Map<String, Alert> alertTypes;
 	private Map<String, Range> sensorsRange;
-
+	
 	public AlertManager(SQLHandler sqlmanager, String sensor) {
+		this.amountOfEmptySet = 0;
 		this.zona = "Z" + sensor.charAt(1);
-		this.sensor = sensor;
+		this.sensor = sensor.toUpperCase();
 		this.lastDate = "";
 		this.sqlmanager = sqlmanager;
 		this.alertTypes = new LinkedHashMap<>();
@@ -32,17 +38,32 @@ public class AlertManager extends Thread {
 
 	public void run() {
 		while (!interrupted()) {
-			LinkedList<LinkedHashMap<String, String>> result;
+			try {
+				LinkedList<LinkedHashMap<String, String>> result;
+				String str = "SELECT * FROM medicao WHERE sensor = '" + sensor + lastDate
+						+ "' ORDER BY hora DESC LIMIT 60";
 
-			synchronized (sqlmanager) {
-				ResultSet medicoes = sqlmanager.queryDB("SELECT * FROM medicao WHERE sensor = '" + sensor+ lastDate + "' ORDER BY hora DESC LIMIT 60");
-				result = Utils.extractResultSet(medicoes);
-			}
+				synchronized (sqlmanager) {
+					ResultSet medicoes = sqlmanager.queryDB(str);
+					result = Utils.extractResultSet(medicoes);
+				}
 
-			if(result.size() >= 60) {
-				insertSensorAlert(result);
-				checkCultureAlerts(result);
-				lastDate = "' AND hora > '" + result.getLast().get("hora");
+				AlertVisualizerGUI.gui.addData(str + " && Size = " + result.size() + "\n");
+				
+				if(result.size() == 0) {
+					amountOfEmptySet++;
+			 	}else if (result.size() >= 60) {
+					lastDate = "' AND hora > '" + result.getFirst().get("hora");
+					insertSensorAlert(result);
+					checkCultureAlerts(result);	
+				}
+				
+				if(amountOfEmptySet>=LIMIT) {
+//					insertAlert(new Alert(zona,sensor,Utils.standardFormat(LocalDateTime.now()));
+				}
+				sleep(3000);
+			} catch (InterruptedException e) {
+				interrupt();
 			}
 		}
 	}
@@ -76,31 +97,36 @@ public class AlertManager extends Thread {
 				if (c.inPercentil(rows.get("leitura"), new Range(0.85, 0.95))) {
 					counters.replace("1", counters.get("1") + 1);
 					if (counters.get("1") > 30) {
-						alertTypes.put("1", new Alert(zona, sensor, rows.get("hora"), rows.get("leitura"), "1",c.getID(), "[Leve] Aproximação ao Limite Superior da Cultura"));
+						alertTypes.put("1", new Alert(zona, sensor, rows.get("hora"), rows.get("leitura"), "1",
+								c.getID(), "[Leve] Aproximação ao Limite Superior da Cultura"));
 					}
 
 				} else if (c.inPercentil(rows.get("leitura"), new Range(0.95, 1.00))) {
 					counters.replace("2", counters.get("2") + 1);
 					if (counters.get("2") > 30) {
-						alertTypes.put("2", new Alert(zona, sensor, rows.get("hora"), rows.get("leitura"), "2",c.getID(), "[Medio] Aproximação ao Limite Superior da Cultura"));
+						alertTypes.put("2", new Alert(zona, sensor, rows.get("hora"), rows.get("leitura"), "2",
+								c.getID(), "[Medio] Aproximação ao Limite Superior da Cultura"));
 					}
 
 				} else if (c.getLimits().isOutOfUpperBounds(Utils.convert(rows.get("leitura")))) {
 					counters.replace("3", counters.get("3") + 1);
 					if (counters.get("3") > 30) {
-						alertTypes.put("3", new Alert(zona, sensor, rows.get("hora"), rows.get("leitura"), "3",c.getID(), "[Grave] Limite Superior da Cultura Excedido"));
+						alertTypes.put("3", new Alert(zona, sensor, rows.get("hora"), rows.get("leitura"), "3",
+								c.getID(), "[Grave] Limite Superior da Cultura Excedido"));
 					}
 
 				} else if (c.inPercentil(rows.get("leitura"), new Range(0.05, 0.15))) {
 					counters.replace("4", counters.get("4") + 1);
 					if (counters.get("4") > 30) {
-						alertTypes.put("4", new Alert(zona, sensor, rows.get("hora"), rows.get("leitura"), "4",c.getID(), "[Leve] Aproximação ao Limite Inferior da Cultura"));
+						alertTypes.put("4", new Alert(zona, sensor, rows.get("hora"), rows.get("leitura"), "4",
+								c.getID(), "[Leve] Aproximação ao Limite Inferior da Cultura"));
 					}
 
 				} else if (c.inPercentil(rows.get("leitura"), new Range(0.00, 0.05))) {
 					counters.replace("5", counters.get("5") + 1);
 					if (counters.get("5") > 30) {
-						alertTypes.put("5", new Alert(zona, sensor, rows.get("hora"), rows.get("leitura"), "5",c.getID(), "[Medio] Aproximação ao Limite Inferior da Cultura"));
+						alertTypes.put("5", new Alert(zona, sensor, rows.get("hora"), rows.get("leitura"), "5",
+								c.getID(), "[Medio] Aproximação ao Limite Inferior da Cultura"));
 					}
 
 				} else if (c.getLimits().isOutOfLowerBounds(Utils.convert(rows.get("leitura")))) {
@@ -138,18 +164,16 @@ public class AlertManager extends Thread {
 			ResultSet state = sqlmanager.queryDB("select estado from cultura where idcultura = " + al.getCultura());
 			state.next();
 			if (state.getInt(1) != 0) {
-				sqlmanager.updateDB("insert into alerta(zona, sensor, hora, leitura, tipo, mensagem, idcultura, horaescrita) "
-						+ "values ('" + al.getZona() + "','" + al.getSensor() + "','" + al.getHora() + "','" 
-						+ al.getLeitura() + "','" + al.getTipo() + "','" + al.getMensagem() + "','"
-						+ al.getCultura() + "','" + Utils.standardFormat(LocalDateTime.now()) + "')");
+				AlertVisualizerGUI.gui.addData("ALERT: Zona - " + al.getZona() + ", Sensor - " + al.getSensor() + ", Hora: "
+						+ al.getHora() + ", Leitura: " + al.getLeitura() + "\n");
+				sqlmanager.updateDB(
+						"insert into alerta(zona, sensor, hora, leitura, tipo, mensagem, idcultura, horaescrita) "
+								+ "values ('" + al.getZona() + "','" + al.getSensor() + "','" + al.getHora() + "','"
+								+ al.getLeitura() + "','" + al.getTipo() + "','" + al.getMensagem() + "','"
+								+ al.getCultura() + "','" + Utils.standardFormat(LocalDateTime.now()) + "')");
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-	}
-
-	public static void main(String[] args) {
-		SQLHandler sqlmanager = new SQLHandler("jdbc:mysql://localhost:3306/gp13_implementacao", "root", "");
-		new AlertManager(sqlmanager, "T1");
 	}
 }

@@ -2,11 +2,6 @@ package grupo11.diretosid;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.concurrent.Callable;
-
-import org.eclipse.paho.client.mqttv3.MqttException;
 
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.client.FindIterable;
@@ -14,14 +9,8 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Sorts;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import org.bson.Document;
 
 public class Sender extends Thread {
@@ -49,12 +38,12 @@ public class Sender extends Thread {
 				FindIterable<Document> localDocuments = localCollection.find();
 				localDocuments.sort(Sorts.descending("Data"));
 				if(localDocuments.first() == null) {
+					
 					continue;
 				}
 				ArrayList<Document> docs = new ArrayList<>();
 				int aux = 0;
 				for (Document d : localDocuments) {
-					
 					if (aux++ >= 4)
 						break;
 					docs.add(d);
@@ -112,8 +101,6 @@ public class Sender extends Thread {
 					Main.gui.addData("INSERTED: " + d.toString() + "\n");
 					sqlmanager.updateDB("insert into medicao(zona, sensor, hora, leitura) " +
 								"values ('" + d.get("Zona") + "','" + d.get("Sensor") + "','" + d.get("Data") + "','" + d.get("Medicao") + "')");
-				}else {
-					Main.gui.addData("DISCARDED: " + d.toString() + "\n");
 				}
 			}
 		} catch (SQLException e) {
@@ -131,5 +118,9 @@ public class Sender extends Thread {
 		}
 		lastMeasumentsTime.clear();
 		this.measurementsPerSecond = numberOfMeasurements;
+	}
+	
+	public int getSleepTime() {
+		return measurementsPerSecond * 1000 * 3;
 	}
 }

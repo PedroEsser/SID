@@ -12,7 +12,6 @@ public class Main {
 	public static void main(String[] args) {
 
 		final SQLHandler sqlmanager = new SQLHandler("jdbc:mysql://localhost:3306/gp13_implementacao", "root", "");
-//		final SQLHandler sqlmanager2 = new SQLHandler("jdbc:mysql://localhost:3306/gp13_implementacao", "root", "");
 		final String ourURI = "mongodb://localhost:25017,localhost:24017,localhost:23017/?replicaSet=projetosid&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
 		MongoClient ourMongoClient = MongoClients.create(ourURI);
 		MongoDatabase ourMongoDB = ourMongoClient.getDatabase("sensors");
@@ -29,8 +28,6 @@ public class Main {
 
 			for (Sender sender : senders)
 				sender.start();
-			
-			new AlertManager(sqlmanager,"t1").start();
 		};
 		gui = new GUI(r);
 
