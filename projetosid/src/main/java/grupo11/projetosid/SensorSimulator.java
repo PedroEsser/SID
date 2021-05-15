@@ -18,7 +18,7 @@ public class SensorSimulator {
 	
 	public SensorSimulator(IMqttClient subscriber, String sensor, MongoDatabase localDB) {
 		this.subscriber = subscriber;
-		localCollection = localDB.getCollection("sensor" + sensor);
+		this.localCollection = localDB.getCollection("sensor" + sensor);
 		serve();
 	}
 	
@@ -28,8 +28,8 @@ public class SensorSimulator {
 			    byte[] payload = msg.getPayload();
 			    String aux = new String(payload);
 			    Document doc = Document.parse(aux);
-			    System.out.println(doc);
 			    localCollection.insertOne(doc);
+			    System.out.println(doc);
 			});
 		} catch (MqttException e) {
 			e.printStackTrace();
@@ -44,7 +44,7 @@ public class SensorSimulator {
 			options.setCleanSession(true);
 			subscriber.connect(options);
 			
-			final String ourURI = "mongodb://localhost:25017,localhost:24017,localhost:23017/?replicaSet=projetosid&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
+			final String ourURI = "mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false";
 	        MongoClient ourMongoClient = MongoClients.create(ourURI);
 	        MongoDatabase ourMongoDB = ourMongoClient.getDatabase("sensors");
 			

@@ -74,9 +74,10 @@ public class GUI {
 	
     public static void main(String[] args) {
     
-    	final String profURI = "mongodb://aluno:aluno@194.210.86.10:27017/?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
-        MongoClient profMongoClient = MongoClients.create(profURI);
-        MongoDatabase profMongoDB = profMongoClient.getDatabase("sid2021");
+//    	final String profURI = "mongodb://aluno:aluno@194.210.86.10:27017/?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
+        final String profURI = "mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false";
+    	MongoClient profMongoClient = MongoClients.create(profURI);
+        MongoDatabase profMongoDB = profMongoClient.getDatabase("sensors");
         
         final String ourURI = "mongodb://localhost:25017,localhost:24017,localhost:23017/?replicaSet=projetosid&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
         MongoClient ourMongoClient = MongoClients.create(ourURI);
