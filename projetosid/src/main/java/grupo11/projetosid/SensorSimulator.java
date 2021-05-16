@@ -15,16 +15,18 @@ public class SensorSimulator {
 	
 	private IMqttClient subscriber;
 	private MongoCollection<Document> localCollection;
+	private String sensor;
 	
 	public SensorSimulator(IMqttClient subscriber, String sensor, MongoDatabase localDB) {
 		this.subscriber = subscriber;
+		this.sensor = sensor;
 		this.localCollection = localDB.getCollection("sensor" + sensor);
 		serve();
 	}
 	
 	public void serve() {
 		try {
-			subscriber.subscribe("simulator_sid_g11", 2, (topic, msg) -> {
+			subscriber.subscribe("simulator_sid_g11_" + sensor, 2, (topic, msg) -> {
 			    byte[] payload = msg.getPayload();
 			    String aux = new String(payload);
 			    Document doc = Document.parse(aux);
@@ -49,6 +51,11 @@ public class SensorSimulator {
 	        MongoDatabase ourMongoDB = ourMongoClient.getDatabase("sensors");
 			
 			new SensorSimulator(subscriber, "t1", ourMongoDB);
+			new SensorSimulator(subscriber, "t2", ourMongoDB);
+			new SensorSimulator(subscriber, "h1", ourMongoDB);
+			new SensorSimulator(subscriber, "h2", ourMongoDB);
+			new SensorSimulator(subscriber, "l1", ourMongoDB);
+			new SensorSimulator(subscriber, "l2", ourMongoDB);
 		} catch (MqttException e) {
 			e.printStackTrace();
 		}

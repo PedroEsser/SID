@@ -45,7 +45,8 @@ public class ReceiverGUI {
         		start.setText("Stop");
         	} else {
         		try {
-					receiver.getSubscriber().disconnect();
+        			if(receiver.getSubscriber().isConnected())
+        				receiver.getSubscriber().disconnect();
 	        		start.setText("Start");
         		} catch (MqttException e1) {
 					e1.printStackTrace();

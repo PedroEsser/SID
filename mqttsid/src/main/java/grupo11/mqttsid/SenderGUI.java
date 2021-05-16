@@ -51,7 +51,8 @@ public class SenderGUI {
         	} else {
         		try {
 	        		for(Sender s: senders) {
-						s.getPublisher().disconnect();
+	        			if(s.getPublisher().isConnected())
+	        				s.getPublisher().disconnect();
 	        			s.interrupt();
 	        		}
 	        		start.setText("Start");
@@ -92,13 +93,13 @@ public class SenderGUI {
 //				options.setCleanSession(false);
 				publisher.connect(options);
 				
-				senders = new Sender[1];
+				senders = new Sender[6];
 				senders[0] = new Sender(publisher, "t1", ourMongoDB);
-//				senders[1] = new Sender(publisher, "h1", ourMongoDB);
-//				senders[2] = new Sender(publisher, "l1", ourMongoDB);
-//				senders[3] = new Sender(publisher, "h2", ourMongoDB);
-//				senders[4] = new Sender(publisher, "t2", ourMongoDB);
-//				senders[5] = new Sender(publisher, "l2", ourMongoDB);
+				senders[1] = new Sender(publisher, "h1", ourMongoDB);
+				senders[2] = new Sender(publisher, "l1", ourMongoDB);
+				senders[3] = new Sender(publisher, "h2", ourMongoDB);
+				senders[4] = new Sender(publisher, "t2", ourMongoDB);
+				senders[5] = new Sender(publisher, "l2", ourMongoDB);
 				
 				for(Sender sender : senders)
 		        	sender.start();
