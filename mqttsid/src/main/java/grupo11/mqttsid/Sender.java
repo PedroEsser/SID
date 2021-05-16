@@ -13,7 +13,10 @@ import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -25,6 +28,7 @@ public class Sender extends Thread implements Callable<Void> {
 	public static final int MARGIN = 5;
 	public static final int TIME_STEP = 2;
 	
+	private String sensor;
 	private MongoCollection<Document> localCollection;
 	
 	private IMqttClient publisher;
@@ -34,38 +38,40 @@ public class Sender extends Thread implements Callable<Void> {
 	
 	public Sender(IMqttClient publisher, String sensor, MongoDatabase localDB) {
         this.publisher = publisher;
+        this.sensor = sensor;
         this.localCollection = localDB.getCollection("sensor" + sensor);
-        lastDate = LocalDateTime.now().minusMinutes(MARGIN);
+        this.lastDate = LocalDateTime.now().minusMinutes(MARGIN);
     }
 	
 	public void run() {
 		try {
-			upToDate();
+			sendMeasuresUntilNow();
 			while(true) {
-				boolean success = produceAndSendMedianUntil(LocalDateTime.now());
+				boolean success = sendMeasuresUntilDate(LocalDateTime.now());
 				if(success) 
 					lastDate = LocalDateTime.now();
 				sleep(TIME_STEP * 1000);
 			}
-		} catch (InterruptedException | MongoInterruptedException | Error e) {
-		}
+		} catch (MongoTimeoutException e) {
+			restartMongo();
+		} catch (InterruptedException | MongoInterruptedException | Error e) {}
 	}
 	
-	private void upToDate() {
+	private void sendMeasuresUntilNow() {
 		LocalDateTime currentDate = LocalDateTime.now();
-		List<Document> allDocs = getDocumentsUntil(currentDate);
-		sendInIntervals(allDocs);
+		List<Document> allDocs = getMeasuresUntilDate(currentDate);
+		upToDate(allDocs);
 		
 		lastDate = currentDate;
 		LocalDateTime nextDate = lastDate.plusSeconds(TIME_STEP);
 		while(nextDate.isBefore(LocalDateTime.now())) {
-			produceAndSendMedianUntil(nextDate);
+			sendMeasuresUntilDate(nextDate);
 			lastDate = nextDate;
 			nextDate = lastDate.plusSeconds(TIME_STEP);
 		};
 	}
 	
-	private void sendInIntervals(List<Document> docs) {
+	private void upToDate(List<Document> docs) {
 		LocalDateTime nextDate = lastDate.plusSeconds(TIME_STEP);
 		List<Document> aux = new LinkedList<Document>();
 		for(int i = 0 ; i < docs.size() ; i++) {
@@ -83,6 +89,25 @@ public class Sender extends Thread implements Callable<Void> {
 		}
 	}
 	
+	private boolean sendMeasuresUntilDate(LocalDateTime nextDate) {
+		List<Document> docs = getMeasuresUntilDate(nextDate);
+		return makeMedianAndSend(docs, nextDate);
+	}
+	
+	private List<Document> getMeasuresUntilDate(LocalDateTime nextDate){
+		Bson gteFilter = Filters.gte("Data", Utils.standardFormat(lastDate));
+		Bson ltFilter = Filters.lt("Data", Utils.standardFormat(nextDate));
+		Bson filter = Filters.and(gteFilter, ltFilter);
+		
+		FindIterable<Document> localDocuments = localCollection.find(filter).sort(Sorts.ascending("Data"));
+		List<Document> medicoes = new ArrayList<Document>();
+		
+		for(Document d : localDocuments)
+			medicoes.add(d);
+		
+		return medicoes;
+	}
+	
 	private boolean makeMedianAndSend(List<Document> docs, LocalDateTime nextDate) {
 		if(!docs.isEmpty()) {
 			double median = Utils.medianOf(docs);
@@ -96,29 +121,6 @@ public class Sender extends Thread implements Callable<Void> {
 		return false;
 	}
 	
-	private boolean produceAndSendMedianUntil(LocalDateTime nextDate) {
-		List<Document> docs = getDocumentsUntil(nextDate);
-		return makeMedianAndSend(docs, nextDate);
-	}
-	
-	private List<Document> getDocumentsUntil(LocalDateTime nextDate){
-		Bson filter = nextDateFilter(nextDate);
-		
-		FindIterable<Document> localDocuments = localCollection.find(filter).sort(Sorts.ascending("Data"));
-		List<Document> medicoes = new ArrayList<Document>();
-		
-		for(Document d : localDocuments)
-			medicoes.add(d);
-		
-		return medicoes;
-	}
-	
-	private Bson nextDateFilter(LocalDateTime nextDate) {
-		Bson gteFilter = Filters.gte("Data", Utils.standardFormat(lastDate));
-		Bson ltFilter = Filters.lt("Data", Utils.standardFormat(nextDate));
-		return Filters.and(gteFilter, ltFilter);
-	}
-	
 	private void sendDocument(Document d) {
 		try {
 			payload = SerializationUtils.serialize(d);
@@ -128,10 +130,6 @@ public class Sender extends Thread implements Callable<Void> {
 			e.printStackTrace();
 		}
 	}
-	
-	public IMqttClient getPublisher() {
-		return publisher;
-	}
 
 	@Override
 	public Void call() throws MqttException {
@@ -140,6 +138,22 @@ public class Sender extends Thread implements Callable<Void> {
         }
         publisher.publish(TOPIC, payload, 2, false);
         return null;
+	}
+	
+	public IMqttClient getPublisher() {
+		return publisher;
+	}
+	
+	private void restartMongo() {
+		try {
+			MongoClient ourMongoClient = MongoClients.create(SenderGUI.OUR_URI);
+			MongoDatabase ourMongoDB = ourMongoClient.getDatabase("sensors");
+			this.localCollection = ourMongoDB.getCollection("sensor" + sensor);
+			sleep(1000);
+			run();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

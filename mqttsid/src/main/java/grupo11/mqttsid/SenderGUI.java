@@ -21,6 +21,7 @@ import com.mongodb.client.MongoDatabase;
 
 public class SenderGUI {
 	
+	public static final String OUR_URI = "mongodb://localhost:25017,localhost:24017,localhost:23017/?replicaSet=projetosid&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
 	public static SenderGUI gui;
 	private static Sender[] senders;
 	
@@ -79,8 +80,7 @@ public class SenderGUI {
 	}
 	
 	public static void main(String[] args) {
-		final String ourURI = "mongodb://localhost:25017,localhost:24017,localhost:23017/?replicaSet=projetosid&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
-        MongoClient ourMongoClient = MongoClients.create(ourURI);
+        MongoClient ourMongoClient = MongoClients.create(OUR_URI);
         MongoDatabase ourMongoDB = ourMongoClient.getDatabase("sensors");
         
         Runnable r = () -> {

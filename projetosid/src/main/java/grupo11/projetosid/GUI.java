@@ -17,6 +17,8 @@ import com.mongodb.client.MongoDatabase;
 
 public class GUI {
 	
+	public static final String PROF_URI = "mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false";
+	public static final String OUR_URI = "mongodb://localhost:25017,localhost:24017,localhost:23017/?replicaSet=projetosid&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
 	public static GUI gui;
 	private static SensorDataWriter[] dataWriters;
 	private static boolean delete;
@@ -75,12 +77,10 @@ public class GUI {
     public static void main(String[] args) {
     
 //    	final String profURI = "mongodb://aluno:aluno@194.210.86.10:27017/?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
-        final String profURI = "mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false";
-    	MongoClient profMongoClient = MongoClients.create(profURI);
+    	MongoClient profMongoClient = MongoClients.create(PROF_URI);
         MongoDatabase profMongoDB = profMongoClient.getDatabase("sensors");
         
-        final String ourURI = "mongodb://localhost:25017,localhost:24017,localhost:23017/?replicaSet=projetosid&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
-        MongoClient ourMongoClient = MongoClients.create(ourURI);
+        MongoClient ourMongoClient = MongoClients.create(OUR_URI);
         MongoDatabase ourMongoDB = ourMongoClient.getDatabase("sensors");
         
         Runnable r = () -> {
