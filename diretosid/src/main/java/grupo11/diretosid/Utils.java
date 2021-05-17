@@ -19,7 +19,7 @@ public class Utils {
 	public static final DateTimeFormatter STANDARD_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
 	public static Map<String, Range> getSensorRangeFilter() {
-		SQLHandler handler = new SQLHandler("jdbc:mysql://localhost:3306/gp13_implementacao", "root", "");
+		SQLHandler handler = new SQLHandler("jdbc:mysql://localhost:3306/projetosid", "root", "");
 		ResultSet result = handler.queryDB("SELECT * FROM sensor");
 		Map<String, Range> aux = new HashMap<>();
 
@@ -37,7 +37,7 @@ public class Utils {
 	}
 
 	public static ArrayList<Culture> getCulturesRangeFilter(String zona, String tipo) {
-		SQLHandler handler = new SQLHandler("jdbc:mysql://localhost:3306/gp13_implementacao", "root", "");
+		SQLHandler handler = new SQLHandler("jdbc:mysql://localhost:3306/projetosid", "root", "");
 		ResultSet result = handler.queryDB("SELECT * FROM `parametrocultura` WHERE idzona = '" + zona + "' ");
 		ArrayList<Culture> aux = new ArrayList<>();
 		try {
@@ -55,9 +55,9 @@ public class Utils {
 
 	public static ArrayList<String> getCultures(String zona) {
 		ArrayList<String> res = new ArrayList<>();
-		SQLHandler handler = new SQLHandler("jdbc:mysql://localhost:3306/gp13_implementacao", "root", "");
+		SQLHandler handler = new SQLHandler("jdbc:mysql://localhost:3306/projetosid", "root", "");
 		ResultSet result = handler.queryDB("SELECT * FROM `parametrocultura` WHERE idzona = '" + zona + "' ");
-		
+
 		try {
 			while (result.next()) {
 				res.add(result.getString("idcultura"));

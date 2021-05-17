@@ -24,32 +24,28 @@ public class Sender extends Thread {
 	public final int DEFAULT_TIME = 1;
 
 	public Sender(MongoDatabase localDB, String sensor, SQLHandler sqlmanager) {
-			this.localCollection = localDB.getCollection("sensor" + sensor);
-			this.sqlmanager = sqlmanager;
-			this.localDB = localDB;
+		this.localCollection = localDB.getCollection("sensor" + sensor);
+		this.sqlmanager = sqlmanager;
+		this.localDB = localDB;
 
-			this.lastMeasumentsTime = new LinkedList<>();
-			this.measurementsPerSecond = DEFAULT_TIME;
+		this.lastMeasumentsTime = new LinkedList<>();
+		this.measurementsPerSecond = DEFAULT_TIME;
 	}
 
 	public void run() {
 		while (!interrupted()) {
 			try {
-				FindIterable<Document> localDocuments = localCollection.find();
-				localDocuments.sort(Sorts.descending("Data"));
-				if(localDocuments.first() == null) {
-					
+				FindIterable<Document> localDocuments;
+
+				synchronized (this) {
+					localDocuments = localCollection.find();
+					localDocuments.sort(Sorts.descending("Data"));
+				}
+
+				if (localDocuments.first() == null) {
 					continue;
 				}
-				ArrayList<Document> docs = new ArrayList<>();
-				int aux = 0;
-				for (Document d : localDocuments) {
-					if (aux++ >= 4)
-						break;
-					docs.add(d);
-					lastMeasumentsTime.add(d.get("Data").toString());
-				}
-				ArrayList<Document> res = checkDocuments(docs);
+				ArrayList<Document> res = checkDocuments(getLastDocuments(localDocuments));
 				produceAndSendNext(res);
 				updateTime();
 				sleep(measurementsPerSecond * 1000 * 3);
@@ -57,6 +53,18 @@ public class Sender extends Thread {
 				interrupt();
 			}
 		}
+	}
+
+	private ArrayList<Document> getLastDocuments(FindIterable<Document> localDocuments) {
+		ArrayList<Document> docs = new ArrayList<>();
+		int timer = 0;
+		for (Document d : localDocuments) {
+			if (timer++ >= 4)
+				break;
+			docs.add(d);
+			lastMeasumentsTime.add(d.get("Data").toString());
+		}
+		return docs;
 	}
 
 	private ArrayList<Document> checkDocuments(ArrayList<Document> dlist) {
@@ -87,20 +95,25 @@ public class Sender extends Thread {
 		return doc;
 	}
 
-	private synchronized void produceAndSendNext(ArrayList<Document> docs) {
+	private void produceAndSendNext(ArrayList<Document> docs) {
 		try {
 			for (Document d : docs) {
-				Double res = Double.parseDouble(String.format("%.2f", Double.parseDouble(d.get("Medicao").toString())).replace(",", "."));
-				ResultSet cond = sqlmanager.queryDB("select count(idmedicao) from medicao where "
-						+ "zona = '" + d.get("Zona").toString() + "' and "
-						+ "sensor = '" + d.get("Sensor").toString() + "' and "
-						+ "hora = '" + d.get("Data").toString() + "' and "
-						+ "leitura = '" + res + "';");
-				
-				if (cond.next() && cond.getInt(1)==0) {
-					Main.gui.addData("INSERTED: " + d.toString() + "\n");
-					sqlmanager.updateDB("insert into medicao(zona, sensor, hora, leitura) " +
-								"values ('" + d.get("Zona") + "','" + d.get("Sensor") + "','" + d.get("Data") + "','" + d.get("Medicao") + "')");
+				synchronized (sqlmanager) {
+
+					Double res = Double.parseDouble(
+							String.format("%.2f", Double.parseDouble(d.get("Medicao").toString())).replace(",", "."));
+					ResultSet cond = sqlmanager.queryDB("select count(idmedicao) from medicao where " + "zona = '"
+							+ d.get("Zona").toString() + "' and " + "sensor = '" + d.get("Sensor").toString() + "' and "
+							+ "hora = '" + d.get("Data").toString() + "' and " + "leitura = '" + res + "';");
+
+					if (!cond.isClosed() && cond.next()) {
+						if (cond.getLong(1) == 0) {
+							Main.gui.addData("INSERTED: " + d.toString() + "\n");
+							sqlmanager.updateDB("insert into medicao(zona, sensor, hora, leitura) " + "values ('"
+									+ d.get("Zona") + "','" + d.get("Sensor") + "','" + d.get("Data") + "','"
+									+ d.get("Medicao") + "')");
+						}
+					}
 				}
 			}
 		} catch (SQLException e) {
@@ -118,9 +131,5 @@ public class Sender extends Thread {
 		}
 		lastMeasumentsTime.clear();
 		this.measurementsPerSecond = numberOfMeasurements;
-	}
-	
-	public int getSleepTime() {
-		return measurementsPerSecond * 1000 * 3;
 	}
 }

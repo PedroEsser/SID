@@ -17,8 +17,9 @@ public class Alert {
 		this.leitura = leitura;
 		this.tipo = tipo;
 	}
-	
-	public Alert(String zona, String sensor, String hora, String leitura, String tipo, String cultura, String mensagem) {
+
+	public Alert(String zona, String sensor, String hora, String leitura, String tipo, String cultura,
+			String mensagem) {
 		this.zona = zona;
 		this.sensor = sensor;
 		this.hora = hora;
@@ -55,12 +56,18 @@ public class Alert {
 	public void setCultura(String cultura) {
 		this.cultura = cultura;
 	}
-	
+
 	public String getMensagem() {
 		return mensagem;
 	}
 
 	public void setMensagem(String mensagem) {
 		this.mensagem = mensagem;
+	}
+
+	@Override
+	public String toString() {
+		return "Alert {zona:'" + zona + "', sensor:'" + sensor + "', hora:'" + hora + "', leitura:'" + leitura + "', tipo:'"
+				+ tipo + "', cultura:'" + cultura + "', mensagem:'" + mensagem + "'}";
 	}
 }
