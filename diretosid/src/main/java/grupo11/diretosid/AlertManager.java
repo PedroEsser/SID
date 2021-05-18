@@ -45,15 +45,19 @@ public class AlertManager extends Thread {
 		while (!interrupted()) {
 			try {
 				LinkedList<LinkedHashMap<String, String>> result;
+
 				String str = "SELECT * FROM medicao WHERE sensor = '" + sensor + lastDate
 						+ "' ORDER BY hora DESC LIMIT 60";
+
 				synchronized (sqlmanager) {
 					ResultSet medicoes = sqlmanager.queryDB(str);
 					result = Utils.extractResultSet(medicoes);
 				}
+
 				System.out.println(str + " && Size = " + result.size() + " && Timer = " + amountOfEmptySet + "\n");
+
 				checkAlerts(result);
-				repeating = result.size();
+//				repeating = result.size();
 				checkInternetConnection();
 				sleep(3000);
 			} catch (InterruptedException | SQLException e) {
@@ -64,6 +68,7 @@ public class AlertManager extends Thread {
 
 	private void checkAlerts(LinkedList<LinkedHashMap<String, String>> result) throws SQLException {
 		if (result.size() >= 60) {
+			repeating = 0;
 			amountOfEmptySet = 0;
 			lastDate = "' AND hora > '" + result.getFirst().get("hora");
 			insertSensorAlert(result);
@@ -71,35 +76,29 @@ public class AlertManager extends Thread {
 
 		} else if (amountOfEmptySet >= LIMIT) {
 			amountOfEmptySet = 0;
-			synchronized (sqlmanager) {
-				ResultSet cond = sqlmanager.queryDB("SELECT count(*) FROM alerta WHERE tipo = '7' AND sensor = '"
-						+ sensor + "' AND horaescrita = (SELECT Max(horaescrita) FROM alerta WHERE sensor = '" + sensor
-						+ "')");
-				if (cond.next() && cond.getInt(1) == 0) {
-					insertCostumAlert(new Alert(zona, sensor, Utils.standardFormat(LocalDateTime.now()), "0.0", "7"),
-							"Comunicação com sensor " + sensor + " Perdida");
-				}
+			if (!hasBeenRecentlyCultureAlerted(sensor, "7")) {
+				insertCostumAlert(new Alert(zona, sensor, Utils.standardFormat(LocalDateTime.now()), "0.0", "7"),
+						"Comunicação com sensor " + sensor + " Perdida");
 			}
 
 		} else if (result.size() == repeating) {
 			amountOfEmptySet++;
+		} else {
+			repeating = result.size();
 		}
 	}
 
 	private void checkInternetConnection() throws SQLException {
 		try {
-			URL url = new URL("http://www.google.com");
+			URL url = new URL("https://www.iscte-iul.pt/");
 			URLConnection connection = url.openConnection();
 			connection.connect();
 		} catch (IOException e) {
-			synchronized (sqlmanager) {
-				ResultSet cond = sqlmanager.queryDB(
-						"SELECT count(*) FROM alerta WHERE tipo = '9' AND horaescrita = (SELECT Max(horaescrita) FROM alerta)");
-				if (cond.next() && cond.getInt(1) == 0) {
-					insertCostumAlert(new Alert(zona, sensor, Utils.standardFormat(LocalDateTime.now()), "0.0", "9"),
-							"Perda da Comunicação geral (Falha de internet ou Falha de energia entre outros)");
-				}
+			if (!hasBeenRecentlyZoneAlerted(zona, "9")) {
+				insertCostumAlert(new Alert(zona, sensor, Utils.standardFormat(LocalDateTime.now()), "0.0", "9"),
+						"Perda da Comunicação geral (Falha de internet ou Falha de energia entre outros)");
 			}
+
 		}
 	}
 
@@ -216,6 +215,28 @@ public class AlertManager extends Thread {
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
+		}
+	}
+
+	private boolean hasBeenRecentlyZoneAlerted(String zona, String type) throws SQLException {
+		synchronized (sqlmanager) {
+			ResultSet lastAlert = sqlmanager.queryDB("select horaescrita from alerta where zona = '" + zona
+					+ "' and tipo = '" + type + "' order by idalerta desc limit 1");
+			if (!lastAlert.next()) {
+				return false;
+			}
+			return Utils.stringToDate(lastAlert.getString(1)).isAfter(LocalDateTime.now().minusMinutes(5));
+		}
+	}
+
+	private boolean hasBeenRecentlyCultureAlerted(String culture, String type) throws SQLException {
+		synchronized (sqlmanager) {
+			ResultSet lastAlert = sqlmanager.queryDB("select horaescrita from alerta where idcultura = '" + culture
+					+ "' and tipo = '" + type + "' order by idalerta desc limit 1");
+			if (!lastAlert.next()) {
+				return false;
+			}
+			return Utils.stringToDate(lastAlert.getString(1)).isAfter(LocalDateTime.now().minusMinutes(5));
 		}
 	}
 

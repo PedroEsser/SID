@@ -71,6 +71,10 @@ public class Utils {
 	public static String standardFormat(LocalDateTime date) {
 		return STANDARD_DATE_FORMAT.format(date);
 	}
+	
+	public static LocalDateTime stringToDate(String date) {
+		return LocalDateTime.parse(date, STANDARD_DATE_FORMAT);
+	}
 
 	public static double medianOf(List<Document> docs) {
 		List<Double> measurements = new ArrayList<Double>();

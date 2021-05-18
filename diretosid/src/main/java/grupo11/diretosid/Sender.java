@@ -37,7 +37,7 @@ public class Sender extends Thread {
 			try {
 				FindIterable<Document> localDocuments;
 
-				synchronized (this) {
+				synchronized (localCollection) {
 					localDocuments = localCollection.find();
 					localDocuments.sort(Sorts.descending("Data"));
 				}
@@ -69,12 +69,12 @@ public class Sender extends Thread {
 
 	private ArrayList<Document> checkDocuments(ArrayList<Document> dlist) {
 		ArrayList<Document> res = new ArrayList<Document>();
-		Double d1, d2, d3;
 		for (int i = 1; i != dlist.size() - 1; i++) {
 			Document d = dlist.get(i);
-			d1 = Double.parseDouble(dlist.get(i - 1).get("Medicao").toString());
-			d2 = Double.parseDouble(d.get("Medicao").toString());
-			d3 = Double.parseDouble(dlist.get(i + 1).get("Medicao").toString());
+			Double d1 = Utils.convert(dlist.get(i - 1).get("Medicao").toString());
+			Double d2 = Utils.convert(d.get("Medicao").toString());
+			Double d3 = Utils.convert(dlist.get(i + 1).get("Medicao").toString());
+			Main.gui.addData("FIRST : " + d1.toString() + " SECOND: "+ d2.toString() + " THIRD : " + d3.toString() + "\n");
 			if (d2 - d1 > 5 && d3 - d2 < -5)
 				res.add(fixDoc(d, d1, d3));
 			else
@@ -100,8 +100,8 @@ public class Sender extends Thread {
 			for (Document d : docs) {
 				synchronized (sqlmanager) {
 
-					Double res = Double.parseDouble(
-							String.format("%.2f", Double.parseDouble(d.get("Medicao").toString())).replace(",", "."));
+					Double res = Utils.convert(
+							String.format("%.2f", Utils.convert(d.get("Medicao").toString())).replace(",", "."));
 					ResultSet cond = sqlmanager.queryDB("select count(idmedicao) from medicao where " + "zona = '"
 							+ d.get("Zona").toString() + "' and " + "sensor = '" + d.get("Sensor").toString() + "' and "
 							+ "hora = '" + d.get("Data").toString() + "' and " + "leitura = '" + res + "';");
