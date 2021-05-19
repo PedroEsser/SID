@@ -14,22 +14,19 @@ import java.sql.SQLException;
 import org.bson.Document;
 
 public class Sender extends Thread {
-
+	
 	private MongoCollection<Document> localCollection;
-	private MongoDatabase localDB;
 	private SQLHandler sqlmanager;
 
 	private LinkedList<String> lastMeasumentsTime;
 	private int measurementsPerSecond;
-	public final int DEFAULT_TIME = 1;
 
 	public Sender(MongoDatabase localDB, String sensor, SQLHandler sqlmanager) {
 		this.localCollection = localDB.getCollection("sensor" + sensor);
 		this.sqlmanager = sqlmanager;
-		this.localDB = localDB;
 
 		this.lastMeasumentsTime = new LinkedList<>();
-		this.measurementsPerSecond = DEFAULT_TIME;
+		this.measurementsPerSecond = 1;
 	}
 
 	public void run() {
@@ -48,7 +45,7 @@ public class Sender extends Thread {
 				ArrayList<Document> res = checkDocuments(getLastDocuments(localDocuments));
 				produceAndSendNext(res);
 				updateTime();
-				sleep(measurementsPerSecond * 1000 * 3);
+				sleep((1/measurementsPerSecond) * 3 * 1000);
 			} catch (InterruptedException | MongoInterruptedException | Error e) {
 				interrupt();
 			}
@@ -74,7 +71,7 @@ public class Sender extends Thread {
 			Double d1 = Utils.convert(dlist.get(i - 1).get("Medicao").toString());
 			Double d2 = Utils.convert(d.get("Medicao").toString());
 			Double d3 = Utils.convert(dlist.get(i + 1).get("Medicao").toString());
-			Main.gui.addData("FIRST : " + d1.toString() + " SECOND: "+ d2.toString() + " THIRD : " + d3.toString() + "\n");
+			
 			if (d2 - d1 > 5 && d3 - d2 < -5)
 				res.add(fixDoc(d, d1, d3));
 			else

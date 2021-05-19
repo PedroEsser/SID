@@ -50,12 +50,11 @@ public class AlertManager extends Thread {
 					ResultSet medicoes = sqlmanager.queryDB("SELECT * FROM medicao WHERE sensor = '" + sensor + lastDate
 							+ "' ORDER BY hora DESC LIMIT 60");
 					result = Utils.extractResultSet(medicoes);
+					System.out.println("Size das novas medicoes = " + result.size() + " && Amount of Repeating Set = "
+							+ amountOfEmptySet);
 				}
 
-				System.out.println("Size das novas medicoes = " + result.size() + " && Amount of Repeating Set = " + amountOfEmptySet + "\n");
-
 				checkAlerts(result);
-//				repeating = result.size();
 				checkInternetConnection();
 				sleep(3000);
 			} catch (InterruptedException | SQLException e) {
@@ -185,7 +184,7 @@ public class AlertManager extends Thread {
 		LinkedList<LinkedHashMap<String, String>> results;
 		synchronized (sqlmanager) {
 			ResultSet cultures = sqlmanager
-					.queryDB("select * from parametrocultura where idzona = " + sensor.charAt(1));
+					.queryDB("SELECT * FROM parametrocultura WHERE idzona = " + sensor.charAt(1));
 			results = Utils.extractResultSet(cultures);
 		}
 		results.forEach(row -> {
@@ -199,14 +198,14 @@ public class AlertManager extends Thread {
 	private void insertAlert(Alert al) {
 		synchronized (sqlmanager) {
 			try {
-				ResultSet state = sqlmanager.queryDB("select estado from cultura where idcultura = " + al.getCultura());
+				ResultSet state = sqlmanager.queryDB("SELECT estado FROM cultura WHERE idcultura = " + al.getCultura());
 				if (state.next() && state.getInt(1) != 0) {
 					AlertVisualizerGUI.gui
 							.addData("ALERT: Zona - " + al.getZona() + ", Sensor - " + al.getSensor() + ", Hora: "
 									+ al.getHora() + ", Leitura: " + al.getLeitura() + ", Tipo:" + al.getTipo() + "\n");
 					sqlmanager.updateDB(
-							"insert into alerta(zona, sensor, hora, leitura, tipo, mensagem, idcultura, horaescrita) "
-									+ "values ('" + al.getZona() + "','" + al.getSensor() + "','" + al.getHora() + "','"
+							"INSERT INTO alerta(zona, sensor, hora, leitura, tipo, mensagem, idcultura, horaescrita) "
+									+ "VALUES ('" + al.getZona() + "','" + al.getSensor() + "','" + al.getHora() + "','"
 									+ al.getLeitura() + "','" + al.getTipo() + "','" + al.getMensagem() + "','"
 									+ al.getCultura() + "','" + Utils.standardFormat(LocalDateTime.now()) + "')");
 				}
@@ -218,8 +217,8 @@ public class AlertManager extends Thread {
 
 	private boolean hasBeenRecentlyZoneAlerted(String zona, String type) throws SQLException {
 		synchronized (sqlmanager) {
-			ResultSet lastAlert = sqlmanager.queryDB("select horaescrita from alerta where zona = '" + zona
-					+ "' and tipo = '" + type + "' order by idalerta desc limit 1");
+			ResultSet lastAlert = sqlmanager.queryDB(
+					"SELECT MAX(horaescrita) FROM alerta WHERE zona = '" + zona + "' AND tipo = '" + type + "';");
 			if (!lastAlert.next()) {
 				return false;
 			}
@@ -229,8 +228,8 @@ public class AlertManager extends Thread {
 
 	private boolean hasBeenRecentlyCultureAlerted(String culture, String type) throws SQLException {
 		synchronized (sqlmanager) {
-			ResultSet lastAlert = sqlmanager.queryDB("select horaescrita from alerta where idcultura = '" + culture
-					+ "' and tipo = '" + type + "' order by idalerta desc limit 1");
+			ResultSet lastAlert = sqlmanager.queryDB("SELECT MAX(horaescrita) FROM alerta WHERE idcultura = '" + culture
+					+ "' AND tipo = '" + type + "';");
 			if (!lastAlert.next()) {
 				return false;
 			}
