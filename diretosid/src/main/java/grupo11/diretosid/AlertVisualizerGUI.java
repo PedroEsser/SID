@@ -9,10 +9,15 @@ import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.text.BadLocationException;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
+
 
 public class AlertVisualizerGUI {
 
@@ -30,7 +35,7 @@ public class AlertVisualizerGUI {
 	}
 
 	private void create() {
-		JFrame window = new JFrame("Mongo To MySQL");
+		JFrame window = new JFrame("Alert Management");
 		JPanel panel = new JPanel(new BorderLayout());
 		console = new JTextArea();
 		console.setEditable(false);
@@ -71,20 +76,20 @@ public class AlertVisualizerGUI {
 	}
 
 	public static void main(String[] args) {
-		final SQLHandler sqlmanager = new SQLHandler("jdbc:mysql://localhost:3306/gp13_implementacao", "root", "");
+		final SQLHandler sqlmanager = new SQLHandler("jdbc:mysql://localhost:3306/projetosid", "root", "");
 		final String ourURI = "mongodb://localhost:25017,localhost:24017,localhost:23017/?replicaSet=projetosid&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
 		MongoClient ourMongoClient = MongoClients.create(ourURI);
 		MongoDatabase ourMongoDB = ourMongoClient.getDatabase("sensors");
 
 		Runnable r = () -> {
 
-			AlertManagers = new AlertManager[1];
+			AlertManagers = new AlertManager[6];
 			AlertManagers[0] = new AlertManager(sqlmanager, "t1");
-//				AlertManagers[1] = new AlertManager(sqlmanager, "t1");
-//				AlertManagers[2] = new AlertManager(sqlmanager, "t1");
-//				AlertManagers[3] = new AlertManager(sqlmanager, "t1");
-//				AlertManagers[4] = new AlertManager(sqlmanager, "t1");
-//				AlertManagers[5] = new AlertManager(sqlmanager, "t1");
+			AlertManagers[1] = new AlertManager(sqlmanager, "h1");
+			AlertManagers[2] = new AlertManager(sqlmanager, "l1");
+			AlertManagers[3] = new AlertManager(sqlmanager, "t2");
+			AlertManagers[4] = new AlertManager(sqlmanager, "h2");
+			AlertManagers[5] = new AlertManager(sqlmanager, "l2");
 
 			for (AlertManager sender : AlertManagers)
 				sender.start();
