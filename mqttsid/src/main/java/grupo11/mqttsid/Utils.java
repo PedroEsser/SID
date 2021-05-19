@@ -46,8 +46,9 @@ public class Utils {
 		List<Double> measurements = new ArrayList<Double>();
 		docs.forEach(d -> measurements.add(Double.parseDouble(d.getString("Medicao"))));
 		Collections.sort(measurements);
-		if(measurements.size() % 2 == 1)
+		if(measurements.size() % 2 == 1) {
 			return measurements.get(measurements.size() / 2);
+		}
 		return (measurements.get(measurements.size() / 2) + measurements.get(measurements.size() / 2 - 1)) / 2;
 	}
 	

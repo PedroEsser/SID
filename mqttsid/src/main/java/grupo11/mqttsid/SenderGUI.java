@@ -51,8 +51,9 @@ public class SenderGUI {
         	} else {
         		try {
 	        		for(Sender s: senders) {
-	        			if(s.getPublisher().isConnected())
+	        			if(s.getPublisher().isConnected()) {
 	        				s.getPublisher().disconnect();
+	        			}
 	        			s.interrupt();
 	        		}
 	        		start.setText("Start");
@@ -81,6 +82,7 @@ public class SenderGUI {
 	}
 	
 	public static void main(String[] args) {
+		
         MongoClient ourMongoClient = MongoClients.create(OUR_URI);
         MongoDatabase ourMongoDB = ourMongoClient.getDatabase("sensors");
         
@@ -90,7 +92,6 @@ public class SenderGUI {
 				MqttConnectOptions options = new MqttConnectOptions();
 				options.setAutomaticReconnect(true);
 				options.setCleanSession(true);
-//				options.setCleanSession(false);
 				publisher.connect(options);
 				
 				senders = new Sender[6];
@@ -101,8 +102,9 @@ public class SenderGUI {
 				senders[4] = new Sender(publisher, "t2", ourMongoDB);
 				senders[5] = new Sender(publisher, "l2", ourMongoDB);
 				
-				for(Sender sender : senders)
+				for(Sender sender : senders) {
 		        	sender.start();
+				}
 			} catch (MqttException e) {
 				e.printStackTrace();
 			}

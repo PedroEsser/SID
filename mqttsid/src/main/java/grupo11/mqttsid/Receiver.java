@@ -18,9 +18,9 @@ public class Receiver {
 	private SQLHandler sqlmanager;
 	private Map<String,Range> sensorsRange;
 	
-	public Receiver(IMqttClient subscriber) {
+	public Receiver(IMqttClient subscriber, SQLHandler sqlmanager) {
 		this.subscriber = subscriber;
-		this.sqlmanager = new SQLHandler("jdbc:mysql://localhost:3306/projetosid", "root", "");
+		this.sqlmanager = sqlmanager;
 		this.sqlmanager.updateDB("delete from medicao");
 		this.sensorsRange = Utils.getRangeFilter();
 		serve();

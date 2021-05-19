@@ -45,8 +45,9 @@ public class ReceiverGUI {
         		start.setText("Stop");
         	} else {
         		try {
-        			if(receiver.getSubscriber().isConnected())
+        			if(receiver.getSubscriber().isConnected()) {
         				receiver.getSubscriber().disconnect();
+        			}
 	        		start.setText("Start");
         		} catch (MqttException e1) {
 					e1.printStackTrace();
@@ -74,22 +75,22 @@ public class ReceiverGUI {
 	
 	public static void main(String[] args) {
 		        
-			Runnable r = () -> {
-				try {
-					IMqttClient subscriber = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "subscriber_grupo11");
-					MqttConnectOptions options = new MqttConnectOptions();
-					options.setAutomaticReconnect(true);
-					options.setCleanSession(true);
-//					options.setCleanSession(false);
-					subscriber.connect(options);
-					
-					receiver = new Receiver(subscriber);
-				} catch (MqttException e) {
-					e.printStackTrace();
-				}
-			};
+		Runnable r = () -> {
+			try {
+				SQLHandler sqlmanager = new SQLHandler("jdbc:mysql://localhost:3306/projetosid", "root", "");
+				IMqttClient subscriber = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "subscriber_grupo11");
+				MqttConnectOptions options = new MqttConnectOptions();
+				options.setAutomaticReconnect(true);
+				options.setCleanSession(true);
+				subscriber.connect(options);
+				
+				receiver = new Receiver(subscriber, sqlmanager);
+			} catch (MqttException e) {
+				e.printStackTrace();
+			}
+		};
 
-			gui = new ReceiverGUI(r);
-		}
+		gui = new ReceiverGUI(r);
+	}
 	
 }

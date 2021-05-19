@@ -92,8 +92,9 @@ public class GUI {
           	dataWriters[4] = new SensorDataWriter("h2", profMongoDB, ourMongoDB, delete);
           	dataWriters[5] = new SensorDataWriter("l2", profMongoDB, ourMongoDB, delete);
             
-        	for(SensorDataWriter writer : dataWriters)
+        	for(SensorDataWriter writer : dataWriters) {
             	writer.start();
+        	}
 		};
 		
         gui = new GUI(r);

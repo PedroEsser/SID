@@ -48,8 +48,9 @@ public class Sender extends Thread implements Callable<Void> {
 			sendMeasuresUntilNow();
 			while(true) {
 				boolean success = sendMeasuresUntilDate(LocalDateTime.now());
-				if(success) 
+				if(success) {
 					lastDate = LocalDateTime.now();
+				}
 				sleep(TIME_STEP * 1000);
 			}
 		} catch (MongoTimeoutException e) {
@@ -102,8 +103,9 @@ public class Sender extends Thread implements Callable<Void> {
 		FindIterable<Document> localDocuments = localCollection.find(filter).sort(Sorts.ascending("Data"));
 		List<Document> medicoes = new ArrayList<Document>();
 		
-		for(Document d : localDocuments)
+		for(Document d : localDocuments) {
 			medicoes.add(d);
+		}
 		
 		return medicoes;
 	}
