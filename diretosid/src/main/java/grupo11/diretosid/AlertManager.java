@@ -46,15 +46,13 @@ public class AlertManager extends Thread {
 			try {
 				LinkedList<LinkedHashMap<String, String>> result;
 
-				String str = "SELECT * FROM medicao WHERE sensor = '" + sensor + lastDate
-						+ "' ORDER BY hora DESC LIMIT 60";
-
 				synchronized (sqlmanager) {
-					ResultSet medicoes = sqlmanager.queryDB(str);
+					ResultSet medicoes = sqlmanager.queryDB("SELECT * FROM medicao WHERE sensor = '" + sensor + lastDate
+							+ "' ORDER BY hora DESC LIMIT 60");
 					result = Utils.extractResultSet(medicoes);
 				}
 
-				System.out.println(str + " && Size = " + result.size() + " && Timer = " + amountOfEmptySet + "\n");
+				System.out.println("Size das novas medicoes = " + result.size() + " && Amount of Repeating Set = " + amountOfEmptySet + "\n");
 
 				checkAlerts(result);
 //				repeating = result.size();
