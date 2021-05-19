@@ -34,10 +34,11 @@ public class Receiver {
 			    ReceiverGUI.gui.addData("receiver:" + aux + "\n");
 			    sqlmanager.updateDB("insert into medicao(zona, sensor, hora, leitura) values ('" + aux.get("Zona") + "','" + aux.get("Sensor") + "','" + aux.get("Data") + "','" + aux.get("Medicao") + "')");
 			    
-			    if(sensorsRange.get(aux.getString("Sensor")).isOutOfBounds(aux.getDouble("Medicao")))
+			    if(sensorsRange.get(aux.getString("Sensor")).isOutOfBounds(aux.getDouble("Medicao"))) {
 					insertBrokenSensorAlert(aux);
-				else
+			    } else {
 					checkCultureLimits(aux);
+			    }
 			});
 		} catch (MqttException e) {
 			e.printStackTrace();
