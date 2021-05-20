@@ -15,12 +15,12 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 
-public class GUI {
+public class SensorDataWriterGUI {
 	
 //	public static final String PROF_URI = "mongodb://aluno:aluno@194.210.86.10:27017/?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
 	public static final String PROF_URI = "mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false";
 	public static final String OUR_URI = "mongodb://localhost:25017,localhost:24017,localhost:23017/?replicaSet=projetosid&readPreference=primary&appname=MongoDB%20Compass&ssl=false";
-	public static GUI gui;
+	public static SensorDataWriterGUI gui;
 	private static SensorDataWriter[] dataWriters;
 	private static boolean delete;
 	
@@ -29,7 +29,7 @@ public class GUI {
 	private JScrollPane scroll;
 	private int count = 0;
 
-	public GUI(Runnable r) {
+	public SensorDataWriterGUI(Runnable r) {
 		this.r = r;
 		create();
 	}
@@ -97,7 +97,7 @@ public class GUI {
         	}
 		};
 		
-        gui = new GUI(r);
+        gui = new SensorDataWriterGUI(r);
 
     }
 	

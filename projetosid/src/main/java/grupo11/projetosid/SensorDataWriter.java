@@ -33,7 +33,7 @@ public class SensorDataWriter extends Thread {
 		this.type = sensor.toUpperCase();
 		this.typeFilter = Filters.and(Filters.eq("Sensor", type), Filters.eq("Zona", type.replaceFirst("^.", "Z")));
 		if(delete) {
-			GUI.gui.addData("Clearing the collection from the sensor " + type + "...\n");
+			SensorDataWriterGUI.gui.addData("Clearing the collection from the sensor " + type + "...\n");
 			localCollection.deleteMany(new BasicDBObject());
 		}
 	}
@@ -61,7 +61,7 @@ public class SensorDataWriter extends Thread {
 						d.replace("Data", formattedDate);
 						if(!Utils.equals(d, lastDocument) && Utils.isValid(d) && Utils.stringToDate(formattedDate).isAfter(lastDate)) {
 							list.add(d);
-							GUI.gui.addData(d+"\n");
+							SensorDataWriterGUI.gui.addData(d+"\n");
 							if(++count % BATCHSIZE == 0) {
 								localCollection.insertMany(list);
 								list.clear();
@@ -94,10 +94,10 @@ public class SensorDataWriter extends Thread {
 
 	private void restartMongo() {
 		try {
-			MongoClient profMongoClient = MongoClients.create(GUI.PROF_URI);
+			MongoClient profMongoClient = MongoClients.create(SensorDataWriterGUI.PROF_URI);
 			MongoDatabase profMongoDB = profMongoClient.getDatabase("sensors");
 			this.cloudCollection = profMongoDB.getCollection("sensor" + sensor);
-			MongoClient ourMongoClient = MongoClients.create(GUI.OUR_URI);
+			MongoClient ourMongoClient = MongoClients.create(SensorDataWriterGUI.OUR_URI);
 			MongoDatabase ourMongoDB = ourMongoClient.getDatabase("sensors");
 			this.localCollection = ourMongoDB.getCollection("sensor" + sensor);
 			sleep(1000);

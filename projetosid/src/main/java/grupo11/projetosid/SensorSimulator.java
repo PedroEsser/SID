@@ -42,6 +42,7 @@ public class SensorSimulator {
 		try {
 			IMqttClient subscriber = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "sensor_simulator_grupo11");
 			MqttConnectOptions options = new MqttConnectOptions();
+			options.setConnectionTimeout(0);
 			options.setAutomaticReconnect(true);
 			options.setCleanSession(true);
 			subscriber.connect(options);

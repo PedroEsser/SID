@@ -80,6 +80,7 @@ public class ReceiverGUI {
 				SQLHandler sqlmanager = new SQLHandler("jdbc:mysql://localhost:3306/projetosid", "root", "");
 				IMqttClient subscriber = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "subscriber_grupo11");
 				MqttConnectOptions options = new MqttConnectOptions();
+				options.setConnectionTimeout(0);
 				options.setAutomaticReconnect(true);
 				options.setCleanSession(true);
 				subscriber.connect(options);

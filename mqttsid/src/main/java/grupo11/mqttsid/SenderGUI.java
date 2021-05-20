@@ -90,6 +90,7 @@ public class SenderGUI {
 			try {
 				IMqttClient publisher = new MqttClient("tcp://broker.mqtt-dashboard.com:1883", "publisher_grupo11");
 				MqttConnectOptions options = new MqttConnectOptions();
+				options.setConnectionTimeout(0);
 				options.setAutomaticReconnect(true);
 				options.setCleanSession(true);
 				publisher.connect(options);
