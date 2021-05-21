@@ -200,14 +200,14 @@ public class AlertManager extends Thread {
 			try {
 				ResultSet state = sqlmanager.queryDB("SELECT estado FROM cultura WHERE idcultura = " + al.getCultura());
 				if (state.next() && state.getInt(1) != 0) {
-					AlertVisualizerGUI.gui
-							.addData("ALERT: Zona - " + al.getZona() + ", Sensor - " + al.getSensor() + ", Hora: "
-									+ al.getHora() + ", Leitura: " + al.getLeitura() + ", Tipo:" + al.getTipo() + "\n");
 					sqlmanager.updateDB(
 							"INSERT INTO alerta(zona, sensor, hora, leitura, tipo, mensagem, idcultura, horaescrita) "
 									+ "VALUES ('" + al.getZona() + "','" + al.getSensor() + "','" + al.getHora() + "','"
 									+ al.getLeitura() + "','" + al.getTipo() + "','" + al.getMensagem() + "','"
 									+ al.getCultura() + "','" + Utils.standardFormat(LocalDateTime.now()) + "')");
+					AlertVisualizerGUI.gui
+					.addData("ALERT: Zona - " + al.getZona() + ", Sensor - " + al.getSensor() + ", Hora: "
+							+ al.getHora() + ", Leitura: " + al.getLeitura() + ", Tipo:" + al.getTipo() + "\n");
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
