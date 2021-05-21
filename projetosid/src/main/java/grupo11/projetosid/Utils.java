@@ -32,7 +32,11 @@ public class Utils {
 	}
 	
 	public static boolean isValid(Document d) {
-		return d.get("Data") != null && isNumber(d.get("Medicao").toString());
+		return isFilled(d) && isNumber(d.get("Medicao").toString());
+	}
+	
+	public static boolean isFilled(Document d) {
+		return d.get("Zona") != null && d.get("Sensor") != null && d.get("Data") != null && d.get("Medicao") != null;
 	}
 	
 	public static boolean equals(Document d1, Document d2) {
