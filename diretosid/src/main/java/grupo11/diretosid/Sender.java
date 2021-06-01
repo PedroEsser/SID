@@ -45,7 +45,7 @@ public class Sender extends Thread {
 				ArrayList<Document> res = checkDocuments(getLastDocuments(localDocuments));
 				produceAndSendNext(res);
 				updateTime();
-				sleep((1/measurementsPerSecond) * 3 * 1000);
+				sleep((int)((1/(double)measurementsPerSecond) * 3 * 1000));
 			} catch (InterruptedException | MongoInterruptedException | Error e) {
 				interrupt();
 			}
